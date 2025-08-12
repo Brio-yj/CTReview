@@ -28,7 +28,11 @@ public class Problem {
     @Column(nullable = true, length = 20)    // ★ 카테고리 선택(옵션)
     private ProblemCategory category;
 
-    @Column(nullable = false) private int currentLevel;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ProblemDifficulty difficulty;
+
+    @Column(nullable = false) private int reviewStep;
     @Column(nullable = false) private int reviewCount;
     private LocalDate nextReviewDate;
 
@@ -38,7 +42,7 @@ public class Problem {
     @Version private Long version;
 
     public void graduate() {
-        this.currentLevel = 0;
+        this.reviewStep = 0;
         this.nextReviewDate = null;
         this.status = ProblemStatus.GRADUATED;
         this.reviewCount = 0; // 깔끔하게 초기화

@@ -29,13 +29,14 @@ public class ReviewService {
     // ReviewService.java (가정)
     @Transactional
 // 순서를 (번호, 이름, 카테고리, 레벨)로 수정
-    public Problem createProblem(Integer number, String name, ProblemCategory category, int level) {
+    public Problem createProblem(Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
         if (problemRepo.existsByName(name.trim())) throw new IllegalStateException("이미 존재하는 문제 이름");
         var p = new Problem();
         p.setNumber(number);
         p.setName(name.trim());
         p.setCategory(category);
-        p.setCurrentLevel(level);
+        p.setDifficulty(difficulty);
+        p.setReviewStep(1);
         p.setReviewCount(0);
         scheduleNextReview(p, LocalDate.now(clock));
         return problemRepo.save(p);
@@ -53,7 +54,7 @@ public class ReviewService {
     }
 
     public List<Problem> listToday() {
-        return problemRepo.findByNextReviewDateAndStatusOrderByCurrentLevelDesc(today(), ProblemStatus.ACTIVE);
+        return problemRepo.findByNextReviewDateAndStatusOrderByReviewStepDesc(today(), ProblemStatus.ACTIVE);
     }
 
     public List<Problem> listAllActiveOrderByDate() {
@@ -65,18 +66,18 @@ public class ReviewService {
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.SOLVE)) {
             throw new IllegalStateException("오늘은 이미 SOLVE 처리되었습니다.");
         }
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        if (p.getCurrentLevel() == 1) {
+        if (p.getReviewStep() >= 3) {
             p.graduate();
         } else {
-            p.setCurrentLevel(p.getCurrentLevel() - 1);
+            p.setReviewStep(p.getReviewStep() + 1);
             p.setReviewCount(0);
             scheduleNextReview(p, today());
         }
 
-        writeLog(p, ReviewAction.SOLVE, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
         return p;
     }
 
@@ -86,14 +87,14 @@ public class ReviewService {
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.FAIL)) {
             throw new IllegalStateException("오늘은 이미 FAIL 처리되었습니다.");
         }
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
         // 실패는 졸업하지 않음: 같은 레벨 유지
         p.setReviewCount(p.getReviewCount() + 1);
         scheduleNextReviewOnFail(p, today());
 
-        writeLog(p, ReviewAction.FAIL, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.FAIL, beforeStep, beforeCount);
         return p;
     }
     private Problem findByNumberOrThrow(int number) {
@@ -101,14 +102,14 @@ public class ReviewService {
                 .orElseThrow(() -> new NoSuchElementException("해당 번호의 문제가 없습니다."));
     }
 
-    private void writeLog(Problem p, ReviewAction action, int beforeLevel, int beforeCount) {
+    private void writeLog(Problem p, ReviewAction action, int beforeStep, int beforeCount) {
         logRepo.save(ReviewLog.builder()
                 .problem(p)
                 .action(action)
                 .actionDate(today())
-                .beforeLevel(beforeLevel)
+                .beforeStep(beforeStep)
                 .beforeReviewCount(beforeCount)
-                .afterLevel(p.getCurrentLevel())
+                .afterStep(p.getReviewStep())
                 .afterReviewCount(p.getReviewCount())
                 .build());
     }
@@ -124,7 +125,7 @@ public class ReviewService {
     }
 
     private void scheduleNextReview(Problem p, LocalDate base) {
-        int[] intervals = reviewPolicy.intervals(p.getCurrentLevel());
+        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
             return;
@@ -142,7 +143,7 @@ public class ReviewService {
         }
     }
     private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
-        int[] intervals = reviewPolicy.intervals(p.getCurrentLevel());
+        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             // 이 케이스는 레벨 0이거나 정책 미설정 — 안전하게 오늘+1일로
             p.setNextReviewDate(base.plusDays(1));
@@ -172,13 +173,12 @@ public class ReviewService {
             return p;
         }
 
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        p.graduate(); // Problem 엔티티의 graduate() 메소드 호출
+        p.graduate();
 
-        // 졸업에 대한 로그 기록
-        writeLog(p, ProblemStatus.GRADUATED, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
         return p;
     }
 

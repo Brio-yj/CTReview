@@ -8,10 +8,12 @@ import java.util.Map;
 public record DashboardSummaryDto(
         String today,
         int streak,
-        List<DailyPoint> daily,              // 최근 30일 처리량
-        Map<Integer, Long> levelDistribution,
-        List<DailyPoint> graduations,        // 최근 30일 졸업 추이
-        List<DailyPoint> heatmap             // 히트맵 소스(전체 기록)
+        List<DailyPoint> daily,
+        Map<Integer, Long> stepDistribution,
+        Map<String, Long> graduationByDifficulty,
+        List<DailyPoint> graduations,
+        List<ProblemDto> graduatedProblems,
+        List<DailyPoint> heatmap
 ) {
     @Builder
     public record DailyPoint(String date, long count) {}

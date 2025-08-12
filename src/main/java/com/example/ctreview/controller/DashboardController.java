@@ -62,14 +62,16 @@ public class DashboardController {
             graduations.add(new DashboardSummaryDto.DailyPoint(day.toString(), gradMap.getOrDefault(day, 0L)));
         }
 
-        // heatmap 소스: 최근 12주 = 84일(대략)
-        LocalDate heatFrom = today.minusDays(83);
-        var heatLogs = logRepo.findByActionDateBetween(heatFrom, today);
-        Map<LocalDate, Long> heatMap = heatLogs.stream()
+        // heatmap: 전체 기록
+        var allLogs = logRepo.findAll();
+        Map<LocalDate, Long> heatMap = allLogs.stream()
                 .collect(Collectors.groupingBy(ReviewLog::getActionDate, Collectors.counting()));
+        LocalDate heatFrom = allLogs.stream()
+                .map(ReviewLog::getActionDate)
+                .min(LocalDate::compareTo)
+                .orElse(today);
         List<DashboardSummaryDto.DailyPoint> heat = new ArrayList<>();
-        for (int i = 0; i <= 83; i++) {
-            LocalDate day = heatFrom.plusDays(i);
+        for (LocalDate day = heatFrom; !day.isAfter(today); day = day.plusDays(1)) {
             heat.add(new DashboardSummaryDto.DailyPoint(day.toString(), heatMap.getOrDefault(day, 0L)));
         }
 

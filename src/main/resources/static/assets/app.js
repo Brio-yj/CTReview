@@ -211,9 +211,13 @@ function renderWeeklyHeatmap(dailyCounts){
     const grid = el('heatmap-grid');
     if(!grid) return;
     grid.innerHTML='';
-    const map = new Map(); let maxVal = 0;
+
+    const map = new Map();
+    let maxVal = 0;
     (dailyCounts||[]).forEach(({date,count})=>{ map.set(date,count); if(count>maxVal)maxVal=count; });
+
     const today = new Date();
+
     const firstDate = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
     const start = new Date(firstDate);
     start.setDate(start.getDate() - start.getDay());

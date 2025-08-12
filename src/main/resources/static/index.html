@@ -10,8 +10,8 @@
         :root{
             /* 2. 카드 높이 기존 대비 1.5배 상향 조정 */
             --h-top: 500px;   /* 420px -> 630px */
-            --h-mid-1: 180px; /* 120px -> 180px */
-            --h-mid-2: 450px; /* 300px -> 450px */
+            --h-mid-1: 120px; /* 퀵리뷰 높이 조정 */
+            --h-mid-2: 510px; /* 검색/필터 영역 확대 */
         }
         .container{
             display:grid;
@@ -37,13 +37,13 @@
 <body>
 <header>
     <div class="header-row">
-        <div class="header-left">
+        <section class="card header-left">
             <h1>CTReview – 스마트 복습</h1>
             <div class="sub">Solve 전용 졸업, Fail 자동 연장(마지막 간격×2), 자동 이월, 검색/통계/히트맵 지원</div>
             <div class="header-actions">
                 <button class="btn" id="btn-theme">라이트 모드</button>
             </div>
-        </div>
+        </section>
         <section class="card heatmap-card header-right">
             <h2>주간 히트맵</h2>
             <div class="body">

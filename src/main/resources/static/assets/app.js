@@ -22,7 +22,6 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-function fmtStatus(s){ return s==='GRADUATED' ? `<span class="pill ok">졸업</span>` : `<span class="pill">${s}</span>`; }
 function fmtDate(d){ return d ?? '-'; }
 
 // ================== CORE LOGIC ==================
@@ -60,21 +59,6 @@ function toast(msg,type='info'){
     setTimeout(()=>div.remove(), 2200);
 }
 
-// ---- Pagination ----
-const PAGESIZE_TODAY = 10;
-const PAGESIZE_SEARCH = 15;
-let todayPage = 1, searchPage = 1;
-function paginate(tbody, page, pageSize, pageIndicatorId){
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    const total = Math.max(1, Math.ceil(rows.length / pageSize));
-    if(page > total) page = total;
-    rows.forEach((tr, idx)=>{ const p = Math.floor(idx / pageSize) + 1; tr.style.display = (p === page) ? '' : 'none'; });
-    el(pageIndicatorId).textContent = `${page} / ${total}`;
-    return page;
-}
-function renderTodayPage(){ todayPage = paginate(el('tbl-today'), todayPage, PAGESIZE_TODAY, 'today-page'); }
-function renderSearchPage(){ searchPage = paginate(el('tbl-search'), searchPage, PAGESIZE_SEARCH, 'search-page'); }
-
 // ---- Data Load & Render ----
 function createActionButtons(problem, type) {
     const tpl = el('row-actions');
@@ -109,7 +93,7 @@ async function loadToday(){
                     <td>${p.name}</td>
                     <td><code class="badge">LV.${p.currentLevel}</code></td>
                     <td>${p.reviewCount}</td>
-                    <td>${fmtStatus(p.status)}</td>
+                    <td>${fmtDate(p.nextReviewDate)}</td>
                     <td></td>`;
                 tr.children[6].appendChild(createActionButtons(p, 'today'));
                 tbody.appendChild(tr);
@@ -117,8 +101,6 @@ async function loadToday(){
         }
     } catch(e){
         tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">오늘 목록 로드 실패: ${e.message}</td></tr>`;
-    } finally {
-        renderTodayPage();
     }
 }
 
@@ -149,7 +131,7 @@ async function performSearch(){
                     <td>${p.name}</td>
                     <td><code class="badge">LV.${p.currentLevel}</code></td>
                     <td>${p.reviewCount}</td>
-                    <td>${fmtStatus(p.status)}</td>
+                    <td>${fmtDate(p.nextReviewDate)}</td>
                     <td></td>`;
                 tr.children[6].appendChild(createActionButtons(p, 'search')); // type: 'search' 전달
                 tbody.appendChild(tr);
@@ -157,8 +139,6 @@ async function performSearch(){
         }
     } catch(e){
         tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
-    } finally {
-        renderSearchPage();
     }
 }
 
@@ -234,19 +214,27 @@ function renderWeeklyHeatmap(dailyCounts){
     const map = new Map(); let maxVal = 0;
     (dailyCounts||[]).forEach(({date,count})=>{ map.set(date,count); if(count>maxVal)maxVal=count; });
     const today = new Date();
-    const start = new Date(today.setDate(today.getDate() - today.getDay() - 83));
+    const firstDate = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
+    const start = new Date(firstDate);
+    start.setDate(start.getDate() - start.getDay());
+    const totalDays = Math.floor((today - start) / (1000*60*60*24)) + 1;
+    const weeks = Math.ceil(totalDays / 7);
 
-    for(let w=0;w<12;w++){ for(let d=0;d<7;d++){
-        const cellDate=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(w*7+d));
-        const key = cellDate.toISOString().slice(0,10);
-        const val = map.get(key)??0;
-        const level = (val === 0) ? 0 : Math.min(4, Math.ceil(val / (Math.max(1, maxVal) / 4)));
-        const cell = document.createElement('div');
-        cell.className='cell';
-        cell.dataset.level = String(level);
-        cell.setAttribute('title',`${key}: ${val}`);
-        grid.appendChild(cell);
-    }}
+    for(let w=0; w<weeks; w++){
+        for(let d=0; d<7; d++){
+            const cellDate=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(w*7+d));
+            const key = cellDate.toISOString().slice(0,10);
+            const val = map.get(key)??0;
+            const level = (val === 0) ? 0 : Math.min(4, Math.ceil(val / (Math.max(1, maxVal) / 4)));
+            const cell = document.createElement('div');
+            cell.className='cell';
+            cell.dataset.level = String(level);
+            cell.setAttribute('title',`${key}: ${val}`);
+            grid.appendChild(cell);
+        }
+    }
+    const wrapper = grid.parentElement;
+    if(wrapper) wrapper.scrollLeft = wrapper.scrollWidth;
 }
 
 async function loadDashboard(){
@@ -292,10 +280,6 @@ function init() {
     el('quick-solve')?.addEventListener('click', () => quickAction('solve'));
     el('quick-fail')?.addEventListener('click', () => quickAction('fail'));
     el('btn-refresh-dashboard')?.addEventListener('click', loadDashboard);
-    el('today-prev').addEventListener('click', ()=>{ todayPage = Math.max(1, todayPage-1); renderTodayPage(); });
-    el('today-next').addEventListener('click', ()=>{ todayPage++; renderTodayPage(); });
-    el('search-prev').addEventListener('click', ()=>{ searchPage = Math.max(1, searchPage-1); renderSearchPage(); });
-    el('search-next').addEventListener('click', ()=>{ searchPage++; renderSearchPage(); });
 
     // Date input UX
     ['s-from','s-to'].forEach(id=>{

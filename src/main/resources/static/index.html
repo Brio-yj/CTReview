@@ -45,13 +45,20 @@
             </div>
         </div>
         <section class="card heatmap-card header-right">
-            <h2>주간 히트맵 (최근 12주)</h2>
+            <h2>주간 히트맵</h2>
             <div class="body">
                 <div class="heatmap-wrapper">
                     <div class="heatmap-sidebar">
                         <div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div><div>일</div>
                     </div>
                     <div id="heatmap-grid" class="heatmap-grid" aria-label="weekly-heatmap"></div>
+                </div>
+                <div class="heatmap-legend" aria-label="heatmap-legend">
+                    <span class="cell" data-level="0"></span><span>없음</span>
+                    <span class="cell" data-level="1"></span>
+                    <span class="cell" data-level="2"></span>
+                    <span class="cell" data-level="3"></span>
+                    <span class="cell" data-level="4"></span><span>많음</span>
                 </div>
             </div>
         </section>
@@ -167,11 +174,6 @@
                     <tbody id="tbl-today"></tbody>
                 </table>
             </div>
-            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
-                <button class="btn" id="today-prev">이전</button>
-                <code class="badge" id="today-page">1 / 1</code>
-                <button class="btn" id="today-next">다음</button>
-            </div>
         </div>
     </section>
 
@@ -192,11 +194,6 @@
                     </thead>
                     <tbody id="tbl-search"></tbody>
                 </table>
-            </div>
-            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
-                <button class="btn" id="search-prev">이전</button>
-                <code class="badge" id="search-page">1 / 1</code>
-                <button class="btn" id="search-next">다음</button>
             </div>
         </div>
     </section>

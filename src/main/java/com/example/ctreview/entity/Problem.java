@@ -3,7 +3,7 @@ package com.example.ctreview.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Table(name = "problems", indexes = {
         @Index(name = "ix_next_review_status", columnList = "next_review_date,status"),
@@ -28,9 +28,13 @@ public class Problem {
     @Column(nullable = true, length = 20)    // ★ 카테고리 선택(옵션)
     private ProblemCategory category;
 
-    @Column(nullable = false) private int currentLevel;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ProblemDifficulty difficulty;
+
+    @Column(nullable = false) private int reviewStep;
     @Column(nullable = false) private int reviewCount;
-    private LocalDate nextReviewDate;
+    private LocalDateTime nextReviewDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) private ProblemStatus status = ProblemStatus.ACTIVE;
@@ -38,7 +42,7 @@ public class Problem {
     @Version private Long version;
 
     public void graduate() {
-        this.currentLevel = 0;
+        this.reviewStep = 0;
         this.nextReviewDate = null;
         this.status = ProblemStatus.GRADUATED;
         this.reviewCount = 0; // 깔끔하게 초기화

@@ -7,8 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -24,20 +23,24 @@ public class ReviewService {
     private final Clock clock;
 
     private LocalDate today() {
-        return LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return LocalDate.now(clock);
+    }
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
     }
     // ReviewService.java (가정)
     @Transactional
 // 순서를 (번호, 이름, 카테고리, 레벨)로 수정
-    public Problem createProblem(Integer number, String name, ProblemCategory category, int level) {
+    public Problem createProblem(Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
         if (problemRepo.existsByName(name.trim())) throw new IllegalStateException("이미 존재하는 문제 이름");
         var p = new Problem();
         p.setNumber(number);
         p.setName(name.trim());
         p.setCategory(category);
-        p.setCurrentLevel(level);
+        p.setDifficulty(difficulty);
+        p.setReviewStep(1);
         p.setReviewCount(0);
-        scheduleNextReview(p, LocalDate.now(clock));
+        scheduleNextReview(p, now());
         return problemRepo.save(p);
     }
     public Problem getByNameOrThrow(String name) {
@@ -53,7 +56,7 @@ public class ReviewService {
     }
 
     public List<Problem> listToday() {
-        return problemRepo.findByNextReviewDateAndStatusOrderByCurrentLevelDesc(today(), ProblemStatus.ACTIVE);
+        return problemRepo.findByStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(ProblemStatus.ACTIVE, now());
     }
 
     public List<Problem> listAllActiveOrderByDate() {
@@ -65,18 +68,18 @@ public class ReviewService {
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.SOLVE)) {
             throw new IllegalStateException("오늘은 이미 SOLVE 처리되었습니다.");
         }
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        if (p.getCurrentLevel() == 1) {
+        if (p.getReviewStep() >= 3) {
             p.graduate();
         } else {
-            p.setCurrentLevel(p.getCurrentLevel() - 1);
+            p.setReviewStep(p.getReviewStep() + 1);
             p.setReviewCount(0);
-            scheduleNextReview(p, today());
+            scheduleNextReview(p, now());
         }
 
-        writeLog(p, ReviewAction.SOLVE, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
         return p;
     }
 
@@ -86,14 +89,14 @@ public class ReviewService {
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.FAIL)) {
             throw new IllegalStateException("오늘은 이미 FAIL 처리되었습니다.");
         }
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
         // 실패는 졸업하지 않음: 같은 레벨 유지
         p.setReviewCount(p.getReviewCount() + 1);
-        scheduleNextReviewOnFail(p, today());
+        scheduleNextReviewOnFail(p, now());
 
-        writeLog(p, ReviewAction.FAIL, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.FAIL, beforeStep, beforeCount);
         return p;
     }
     private Problem findByNumberOrThrow(int number) {
@@ -101,14 +104,14 @@ public class ReviewService {
                 .orElseThrow(() -> new NoSuchElementException("해당 번호의 문제가 없습니다."));
     }
 
-    private void writeLog(Problem p, ReviewAction action, int beforeLevel, int beforeCount) {
+    private void writeLog(Problem p, ReviewAction action, int beforeStep, int beforeCount) {
         logRepo.save(ReviewLog.builder()
                 .problem(p)
                 .action(action)
                 .actionDate(today())
-                .beforeLevel(beforeLevel)
+                .beforeStep(beforeStep)
                 .beforeReviewCount(beforeCount)
-                .afterLevel(p.getCurrentLevel())
+                .afterStep(p.getReviewStep())
                 .afterReviewCount(p.getReviewCount())
                 .build());
     }
@@ -123,41 +126,38 @@ public class ReviewService {
         problemRepo.delete(problem);
     }
 
-    private void scheduleNextReview(Problem p, LocalDate base) {
-        int[] intervals = reviewPolicy.intervals(p.getCurrentLevel());
+    private void scheduleNextReview(Problem p, LocalDateTime base) {
+        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
             return;
         }
+        var unit = reviewPolicy.unit();
         if (p.getReviewCount() < intervals.length) {
-            int days = intervals[p.getReviewCount()];
-            p.setNextReviewDate(base.plusDays(days));
+            int amt = intervals[p.getReviewCount()];
+            p.setNextReviewDate(base.plus(amt, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         } else {
-            // 원본 콘솔과 달리: Solve 외에는 졸업하지 않음
-            // Fail로 인해 회차가 간격을 초과해도 여기서 졸업 금지 → 마지막 간격 유지(다음 로직에서 보정)
             int last = intervals[intervals.length - 1];
-            p.setNextReviewDate(base.plusDays(last));
+            p.setNextReviewDate(base.plus(last, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         }
     }
-    private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
-        int[] intervals = reviewPolicy.intervals(p.getCurrentLevel());
+    private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
+        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
+        var unit = reviewPolicy.unit();
         if (intervals.length == 0) {
-            // 이 케이스는 레벨 0이거나 정책 미설정 — 안전하게 오늘+1일로
-            p.setNextReviewDate(base.plusDays(1));
+            p.setNextReviewDate(base.plus(1, unit));
             p.setStatus(ProblemStatus.ACTIVE);
             return;
         }
         if (p.getReviewCount() < intervals.length) {
-            int days = intervals[p.getReviewCount()];
-            p.setNextReviewDate(base.plusDays(days));
+            int amt = intervals[p.getReviewCount()];
+            p.setNextReviewDate(base.plus(amt, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         } else {
             int last = intervals[intervals.length - 1];
-            // 실패가 간격 끝을 초과했으므로 last*2
-            p.setNextReviewDate(base.plusDays(last * 2L));
-            // reviewCount를 intervals.length로 캡핑해 과도 증가 방지
+            p.setNextReviewDate(base.plus(last * 2L, unit));
             p.setReviewCount(intervals.length);
             p.setStatus(ProblemStatus.ACTIVE);
         }
@@ -172,13 +172,12 @@ public class ReviewService {
             return p;
         }
 
-        var beforeLevel = p.getCurrentLevel();
+        var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        p.graduate(); // Problem 엔티티의 graduate() 메소드 호출
+        p.graduate();
 
-        // 졸업에 대한 로그 기록
-        writeLog(p, ProblemStatus.GRADUATED, beforeLevel, beforeCount);
+        writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
         return p;
     }
 

@@ -22,7 +22,7 @@ public class ProblemController {
 
     @PostMapping("/problems")
     public ProblemDto create(@Valid @RequestBody ProblemCreateRequest req) {
-        return ProblemDto.from(reviewService.createProblem(req.number(), req.name(), req.category(), req.level()));
+        return ProblemDto.from(reviewService.createProblem(req.number(), req.name(), req.category(), req.difficulty()));
     }
 
     @GetMapping("/reviews/today")
@@ -36,15 +36,21 @@ public class ProblemController {
     }
 
     @PostMapping("/problems/solve")
-    public ActionResultDto solve(@RequestParam String name) { // name만 받도록 수정
-        Problem p = reviewService.solve(name); // name을 그대로 서비스에 전달
+    public ActionResultDto solve(@RequestParam String name) {
+        Problem p = reviewService.solve(name);
         return ActionResultDto.of("SOLVE 완료", ProblemDto.from(p));
     }
 
     @PostMapping("/problems/fail")
-    public ActionResultDto fail(@RequestParam String name) { // name만 받도록 수정
-        Problem p = reviewService.fail(name); // name을 그대로 서비스에 전달
+    public ActionResultDto fail(@RequestParam String name) {
+        Problem p = reviewService.fail(name);
         return ActionResultDto.of("FAIL 처리", ProblemDto.from(p));
+    }
+
+    @PostMapping("/problems/graduate")
+    public ActionResultDto graduate(@RequestParam String name) {
+        Problem p = reviewService.graduate(name);
+        return ActionResultDto.of("GRADUATE", ProblemDto.from(p));
     }
 
     @DeleteMapping("/problems")

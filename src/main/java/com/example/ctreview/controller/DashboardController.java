@@ -1,6 +1,7 @@
 package com.example.ctreview.controller;
 
 import com.example.ctreview.dto.DashboardSummaryDto;
+import com.example.ctreview.dto.ProblemDto;
 import com.example.ctreview.entity.*;
 import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.repository.ReviewLogRepository;
@@ -46,22 +47,11 @@ public class DashboardController {
             daily.add(new DashboardSummaryDto.DailyPoint(day.toString(), dailyMap.getOrDefault(day, 0L)));
         }
 
-        // levelDistribution
-        Map<Integer, Long> levelDist = problemRepo.findByStatus(ProblemStatus.ACTIVE).stream()
-                .collect(Collectors.groupingBy(Problem::getCurrentLevel, Collectors.counting()));
+        // stepDistribution
+        Map<Integer, Long> stepDist = problemRepo.findByStatus(ProblemStatus.ACTIVE).stream()
+                .collect(Collectors.groupingBy(Problem::getReviewStep, Collectors.counting()));
 
         // graduations (Solve로 1→0)
-        Map<LocalDate, Long> gradMap = recentLogs.stream()
-                .filter(l -> l.getAction() == ReviewAction.SOLVE
-                        && l.getBeforeLevel() != null && l.getBeforeLevel() == 1
-                        && l.getAfterLevel() != null && l.getAfterLevel() == 0)
-                .collect(Collectors.groupingBy(ReviewLog::getActionDate, Collectors.counting()));
-        List<DashboardSummaryDto.DailyPoint> graduations = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
-            LocalDate day = from.plusDays(i);
-            graduations.add(new DashboardSummaryDto.DailyPoint(day.toString(), gradMap.getOrDefault(day, 0L)));
-        }
-
         // heatmap: 전체 기록
         var allLogs = logRepo.findAll();
         Map<LocalDate, Long> heatMap = allLogs.stream()
@@ -70,6 +60,13 @@ public class DashboardController {
                 .map(ReviewLog::getActionDate)
                 .min(LocalDate::compareTo)
                 .orElse(today);
+
+        Map<String, Long> gradByDiff = problemRepo.findByStatus(ProblemStatus.GRADUATED).stream()
+                .collect(Collectors.groupingBy(p -> p.getDifficulty().name(), Collectors.counting()));
+
+        var graduatedProblems = problemRepo.findByStatus(ProblemStatus.GRADUATED).stream()
+                .map(ProblemDto::from)
+                .toList();
         List<DashboardSummaryDto.DailyPoint> heat = new ArrayList<>();
         for (LocalDate day = heatFrom; !day.isAfter(today); day = day.plusDays(1)) {
             heat.add(new DashboardSummaryDto.DailyPoint(day.toString(), heatMap.getOrDefault(day, 0L)));
@@ -79,8 +76,9 @@ public class DashboardController {
                 .today(today.toString())
                 .streak(streak)
                 .daily(daily)
-                .levelDistribution(levelDist)
-                .graduations(graduations)
+                .stepDistribution(stepDist)
+                .graduationByDifficulty(gradByDiff)
+                .graduatedProblems(graduatedProblems)
                 .heatmap(heat)
                 .build();
     }

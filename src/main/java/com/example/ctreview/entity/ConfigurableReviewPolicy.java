@@ -14,7 +14,7 @@ import java.util.Map;
 @Getter
 @ConfigurationProperties(prefix = "review")
 class ReviewConfigProps {
-    private Map<Integer, List<Integer>> levels = new HashMap<>();
+    private Map<Integer, List<Integer>> steps = new HashMap<>();
 }
 @Component
 @RequiredArgsConstructor
@@ -22,8 +22,8 @@ public class ConfigurableReviewPolicy implements ReviewPolicy {
     private final ReviewConfigProps props;
 
     @Override
-    public int[] intervals(int level) {
-        var list = props.getLevels().getOrDefault(level,List.of());
+    public int[] intervals(int step) {
+        var list = props.getSteps().getOrDefault(step,List.of());
         return list.stream().mapToInt(Integer::intValue).toArray();
     }
 }

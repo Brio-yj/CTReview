@@ -23,7 +23,9 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
+
 function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
+
 const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
 
 // ================== CORE LOGIC ==================
@@ -31,9 +33,18 @@ const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
 // ---- 테마 변경 ----
 function applyTheme(theme){
     document.body.classList.toggle('light', theme === 'light');
-    const btn = el('btn-theme');
-    if (btn) btn.textContent = theme === 'light' ? '다크 모드' : '라이트 모드';
-    loadDashboard(); // 테마 변경 시 대시보드(차트, 히트맵) 다시 그리기
+    const icon = el('theme-icon');
+    const label = el('theme-label');
+    if(icon && label){
+        if(theme === 'light'){
+            icon.textContent='☀️';
+            label.textContent='Light';
+        }else{
+            icon.textContent='🌙';
+            label.textContent='Dark';
+        }
+    }
+    loadDashboard();
 }
 function toggleTheme(){
     const currentTheme = document.body.classList.contains('light') ? 'light' : 'dark';
@@ -261,8 +272,10 @@ async function loadDashboard(){
 
         const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
+
         const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
         drawBarChart(el('chart-grad'), gL, gV, chartColors);
+
         const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
         if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
         const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }

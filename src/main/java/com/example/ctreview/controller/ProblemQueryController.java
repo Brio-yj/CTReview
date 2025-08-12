@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -35,8 +36,8 @@ public class ProblemQueryController {
         }
         if (req.difficulty() != null) stream = stream.filter(p -> p.getDifficulty() == req.difficulty());
         if (req.status() != null) stream = stream.filter(p -> p.getStatus() == req.status());
-        if (req.from() != null) stream = stream.filter(p -> p.getNextReviewDate() != null && !p.getNextReviewDate().isBefore(req.from()));
-        if (req.to() != null) stream = stream.filter(p -> p.getNextReviewDate() != null && !p.getNextReviewDate().isAfter(req.to()));
+        if (req.from() != null) stream = stream.filter(p -> p.getNextReviewDate() != null && !p.getNextReviewDate().isBefore(req.from().atStartOfDay()));
+        if (req.to() != null) stream = stream.filter(p -> p.getNextReviewDate() != null && !p.getNextReviewDate().isAfter(req.to().atTime(LocalTime.MAX)));
 
         Comparator<Problem> comparator = Comparator.comparing(Problem::getNextReviewDate, Comparator.nullsLast(Comparator.naturalOrder()));
         if ("dateDesc".equalsIgnoreCase(req.sort())) comparator = comparator.reversed();

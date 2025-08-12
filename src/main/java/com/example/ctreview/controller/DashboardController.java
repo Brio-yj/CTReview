@@ -52,6 +52,8 @@ public class DashboardController {
                 .collect(Collectors.groupingBy(Problem::getReviewStep, Collectors.counting()));
 
         // graduations (Solve로 1→0)
+
+
         Map<LocalDate, Long> gradMap = recentLogs.stream()
                 .filter(l -> l.getAction() == ReviewAction.SOLVE
                         && l.getBeforeStep() != null && l.getBeforeStep() == 3
@@ -62,6 +64,7 @@ public class DashboardController {
             LocalDate day = from.plusDays(i);
             graduations.add(new DashboardSummaryDto.DailyPoint(day.toString(), gradMap.getOrDefault(day, 0L)));
         }
+
 
         // heatmap: 전체 기록
         var allLogs = logRepo.findAll();
@@ -89,7 +92,9 @@ public class DashboardController {
                 .daily(daily)
                 .stepDistribution(stepDist)
                 .graduationByDifficulty(gradByDiff)
+
                 .graduations(graduations)
+
                 .graduatedProblems(graduatedProblems)
                 .heatmap(heat)
                 .build();

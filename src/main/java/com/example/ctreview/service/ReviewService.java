@@ -7,8 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -24,7 +23,10 @@ public class ReviewService {
     private final Clock clock;
 
     private LocalDate today() {
-        return LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return LocalDate.now(clock);
+    }
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
     }
     // ReviewService.java (가정)
     @Transactional
@@ -38,7 +40,7 @@ public class ReviewService {
         p.setDifficulty(difficulty);
         p.setReviewStep(1);
         p.setReviewCount(0);
-        scheduleNextReview(p, LocalDate.now(clock));
+        scheduleNextReview(p, now());
         return problemRepo.save(p);
     }
     public Problem getByNameOrThrow(String name) {
@@ -54,7 +56,9 @@ public class ReviewService {
     }
 
     public List<Problem> listToday() {
+
         return problemRepo.findByNextReviewDateAndStatusOrderByReviewStepDesc(today(), ProblemStatus.ACTIVE);
+
     }
 
     public List<Problem> listAllActiveOrderByDate() {
@@ -74,7 +78,7 @@ public class ReviewService {
         } else {
             p.setReviewStep(p.getReviewStep() + 1);
             p.setReviewCount(0);
-            scheduleNextReview(p, today());
+            scheduleNextReview(p, now());
         }
 
         writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
@@ -92,7 +96,7 @@ public class ReviewService {
 
         // 실패는 졸업하지 않음: 같은 레벨 유지
         p.setReviewCount(p.getReviewCount() + 1);
-        scheduleNextReviewOnFail(p, today());
+        scheduleNextReviewOnFail(p, now());
 
         writeLog(p, ReviewAction.FAIL, beforeStep, beforeCount);
         return p;
@@ -124,41 +128,41 @@ public class ReviewService {
         problemRepo.delete(problem);
     }
 
+
     private void scheduleNextReview(Problem p, LocalDate base) {
+
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
             return;
         }
+        var unit = reviewPolicy.unit();
         if (p.getReviewCount() < intervals.length) {
-            int days = intervals[p.getReviewCount()];
-            p.setNextReviewDate(base.plusDays(days));
+            int amt = intervals[p.getReviewCount()];
+            p.setNextReviewDate(base.plus(amt, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         } else {
-            // 원본 콘솔과 달리: Solve 외에는 졸업하지 않음
-            // Fail로 인해 회차가 간격을 초과해도 여기서 졸업 금지 → 마지막 간격 유지(다음 로직에서 보정)
             int last = intervals[intervals.length - 1];
-            p.setNextReviewDate(base.plusDays(last));
+            p.setNextReviewDate(base.plus(last, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         }
     }
+
     private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
+
         if (intervals.length == 0) {
-            // 이 케이스는 레벨 0이거나 정책 미설정 — 안전하게 오늘+1일로
-            p.setNextReviewDate(base.plusDays(1));
+            p.setNextReviewDate(base.plus(1, unit));
             p.setStatus(ProblemStatus.ACTIVE);
             return;
         }
         if (p.getReviewCount() < intervals.length) {
-            int days = intervals[p.getReviewCount()];
-            p.setNextReviewDate(base.plusDays(days));
+            int amt = intervals[p.getReviewCount()];
+            p.setNextReviewDate(base.plus(amt, unit));
             p.setStatus(ProblemStatus.ACTIVE);
         } else {
             int last = intervals[intervals.length - 1];
-            // 실패가 간격 끝을 초과했으므로 last*2
-            p.setNextReviewDate(base.plusDays(last * 2L));
-            // reviewCount를 intervals.length로 캡핑해 과도 증가 방지
+            p.setNextReviewDate(base.plus(last * 2L, unit));
             p.setReviewCount(intervals.length);
             p.setStatus(ProblemStatus.ACTIVE);
         }

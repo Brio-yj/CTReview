@@ -3,12 +3,14 @@ package com.example.ctreview.dto;
 import com.example.ctreview.entity.Problem;
 import lombok.Builder;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 @Builder
 public record ProblemDto(
         Integer number, String name, String category,
         String difficulty,
+
         int reviewStep, int reviewCount, LocalDate nextReviewDate, String status
+
 ) {
     public static ProblemDto from(Problem p) {
         return ProblemDto.builder()

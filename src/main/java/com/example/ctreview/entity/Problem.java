@@ -3,7 +3,7 @@ package com.example.ctreview.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Table(name = "problems", indexes = {
         @Index(name = "ix_next_review_status", columnList = "next_review_date,status"),
@@ -34,7 +34,7 @@ public class Problem {
 
     @Column(nullable = false) private int reviewStep;
     @Column(nullable = false) private int reviewCount;
-    private LocalDate nextReviewDate;
+    private LocalDateTime nextReviewDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) private ProblemStatus status = ProblemStatus.ACTIVE;

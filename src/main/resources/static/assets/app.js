@@ -143,7 +143,7 @@ async function performSearch(){
                     <td><code class="badge">LV.${p.currentLevel}</code></td>
                     <td>${p.reviewCount}</td>
                     <td>${fmtDate(p.nextReviewDate)}</td>
-                    <td></td>
+
                     <td></td>`;
                 const [btnGrad, btnDel] = createSearchButtons(p, tr);
                 tr.children[6].appendChild(btnGrad);
@@ -152,7 +152,9 @@ async function performSearch(){
             });
         }
     } catch(e){
-        tbody.innerHTML = `<tr><td colspan="8" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
+
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
+
     }
 }
 
@@ -248,13 +250,13 @@ function renderWeeklyHeatmap(dailyCounts){
     (dailyCounts||[]).forEach(({date,count})=>{ map.set(date,count); if(count>maxVal)maxVal=count; });
 
     const today = new Date();
-    const earliest = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
-    const diffDays = Math.floor((today - earliest) / (1000*60*60*24)) + 1;
-    const weeks = Math.max(12, Math.min(104, Math.ceil(diffDays / 7)));
 
-    const start = new Date(today);
-    start.setDate(start.getDate() - (weeks - 1) * 7);
+
+    const firstDate = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
+    const start = new Date(firstDate);
     start.setDate(start.getDate() - start.getDay());
+    const totalDays = Math.floor((today - start) / (1000*60*60*24)) + 1;
+    const weeks = Math.ceil(totalDays / 7);
 
     for(let w=0; w<weeks; w++){
         for(let d=0; d<7; d++){
@@ -317,8 +319,7 @@ function init() {
     el('quick-solve')?.addEventListener('click', () => quickAction('solve'));
     el('quick-fail')?.addEventListener('click', () => quickAction('fail'));
     el('btn-refresh-dashboard')?.addEventListener('click', loadDashboard);
-    el('p-name')?.addEventListener('keydown', e=>{ if(e.key==='Enter') addProblem(); });
-    el('s-q')?.addEventListener('keydown', e=>{ if(e.key==='Enter') performSearch(); });
+
 
     // Date input UX
     ['s-from','s-to'].forEach(id=>{

@@ -23,12 +23,9 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-function fmtDate(d){
-    if(!d) return '-';
-    const [date,time] = d.split('T');
-    if(time){ return `${date.replace(/-/g,'.')} ${time.slice(0,5)}`; }
-    return date.replace(/-/g,'.');
-}
+
+function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
+
 const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
 
 // ================== CORE LOGIC ==================
@@ -275,6 +272,10 @@ async function loadDashboard(){
 
         const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
+
+        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
+        drawBarChart(el('chart-grad'), gL, gV, chartColors);
+
         const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
         if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
         const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }

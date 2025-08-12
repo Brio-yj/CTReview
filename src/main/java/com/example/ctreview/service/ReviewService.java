@@ -56,7 +56,9 @@ public class ReviewService {
     }
 
     public List<Problem> listToday() {
-        return problemRepo.findByStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(ProblemStatus.ACTIVE, now());
+
+        return problemRepo.findByNextReviewDateAndStatusOrderByReviewStepDesc(today(), ProblemStatus.ACTIVE);
+
     }
 
     public List<Problem> listAllActiveOrderByDate() {
@@ -126,7 +128,9 @@ public class ReviewService {
         problemRepo.delete(problem);
     }
 
-    private void scheduleNextReview(Problem p, LocalDateTime base) {
+
+    private void scheduleNextReview(Problem p, LocalDate base) {
+
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
@@ -143,9 +147,10 @@ public class ReviewService {
             p.setStatus(ProblemStatus.ACTIVE);
         }
     }
-    private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
+
+    private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        var unit = reviewPolicy.unit();
+
         if (intervals.length == 0) {
             p.setNextReviewDate(base.plus(1, unit));
             p.setStatus(ProblemStatus.ACTIVE);

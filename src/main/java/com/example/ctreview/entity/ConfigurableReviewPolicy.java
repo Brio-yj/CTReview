@@ -16,7 +16,7 @@ import java.time.temporal.ChronoUnit;
 @ConfigurationProperties(prefix = "review")
 class ReviewConfigProps {
     private Map<Integer, List<Integer>> steps = new HashMap<>();
-    private String unit = "DAYS";
+
 }
 @Component
 @RequiredArgsConstructor

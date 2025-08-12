@@ -56,6 +56,15 @@ public class ProblemController {
         return ActionResultDto.of("FAIL 처리", ProblemDto.from(p));
     }
 
+    @PostMapping("/problems/graduate")
+    public ActionResultDto graduate(@RequestParam(required=false) Integer number,
+                                    @RequestParam(required=false) String name) {
+        Problem p = (name != null && !name.isBlank())
+                ? reviewService.forceGraduate(reviewService.getByNameOrThrow(name).getNumber())
+                : reviewService.forceGraduate(reviewService.getByNumberOrThrow(number).getNumber());
+        return ActionResultDto.of("GRADUATE 완료", ProblemDto.from(p));
+    }
+
     @DeleteMapping("/problems")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@RequestParam(required=false) Integer number,

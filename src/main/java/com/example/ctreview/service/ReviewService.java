@@ -96,6 +96,15 @@ public class ReviewService {
         writeLog(p, ReviewAction.FAIL, beforeLevel, beforeCount);
         return p;
     }
+
+    public Problem forceGraduate(int number) {
+        Problem p = findByNumberOrThrow(number);
+        var beforeLevel = p.getCurrentLevel();
+        var beforeCount = p.getReviewCount();
+        p.graduate();
+        writeLog(p, ReviewAction.SOLVE, beforeLevel, beforeCount);
+        return p;
+    }
     private Problem findByNumberOrThrow(int number) {
         return problemRepo.findByNumber(number)
                 .orElseThrow(() -> new NoSuchElementException("해당 번호의 문제가 없습니다."));

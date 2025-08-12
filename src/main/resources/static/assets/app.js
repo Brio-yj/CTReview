@@ -22,17 +22,16 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-function fmtDate(d){ return d ?? '-'; }
+function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
 
 // ================== CORE LOGIC ==================
 
-// ---- 3. 새로고침 없는 테마 변경 ----
+// ---- 테마 변경 ----
 function applyTheme(theme){
     document.body.classList.toggle('light', theme === 'light');
     const btn = el('btn-theme');
     if (btn) btn.textContent = theme === 'light' ? '다크 모드' : '라이트 모드';
-    // 테마 변경 시 대시보드(차트, 히트맵) 다시 그리기
-    loadDashboard();
+    loadDashboard(); // 테마 변경 시 대시보드(차트, 히트맵) 다시 그리기
 }
 function toggleTheme(){
     const currentTheme = document.body.classList.contains('light') ? 'light' : 'dark';
@@ -41,7 +40,7 @@ function toggleTheme(){
     applyTheme(newTheme);
 }
 
-// ---- Toast (CSS 기반으로 변경) ----
+// ---- Toast ----
 function toastHost(){
     let h = el('toast-host');
     if(!h){ h = document.createElement('div'); h.id='toast-host';
@@ -52,7 +51,6 @@ function toastHost(){
 }
 function toast(msg,type='info'){
     const div = document.createElement('div');
-    // type에 따라 info, ok, bad 클래스 추가
     div.className = `toast ${type}`;
     div.textContent = msg;
     toastHost().appendChild(div);
@@ -60,21 +58,54 @@ function toast(msg,type='info'){
 }
 
 // ---- Data Load & Render ----
-function createActionButtons(problem, type) {
-    const tpl = el('row-actions');
-    const node = tpl.content.cloneNode(true);
-    const [btnSolve, btnFail, btnDelete] = node.querySelectorAll('button');
+/**
+ * 테이블 행(TR) 생성 함수
+ * @param {object} p - 문제 데이터
+ * @param {'today'|'search'} type - 테이블 종류
+ */
+function createProblemRow(p, type) {
+    const tr = document.createElement('tr');
+    const tpl = el('row-actions').content.cloneNode(true);
+    const [btnSolve, btnFail, btnDelete, btnGraduate] = tpl.querySelectorAll('button');
 
-    btnSolve.addEventListener('click', ()=> actBy('solve', problem, btnSolve, btnFail, btnDelete));
-    btnFail.addEventListener('click', ()=> actBy('fail',  problem, btnSolve, btnFail, btnDelete));
-    btnDelete.addEventListener('click',()=> delBy(problem, btnSolve, btnFail, btnDelete));
+    btnDelete.addEventListener('click', (e) => { e.stopPropagation(); delBy(p, btnDelete); });
 
-    // 1. 검색 결과에서는 Solve/Fail 버튼 숨기기
-    if (type === 'search') {
+    let cells = `
+        <td>${p.category ?? '-'}</td>
+        <td>${p.number ?? '-'}</td>
+        <td>${p.name}</td>
+        <td><code class="badge">LV.${p.currentLevel}</code></td>
+    `;
+    const actionTd = document.createElement('td');
+
+    if (type === 'today') {
+        cells += `<td>${p.reviewCount}</td>`;
+        btnSolve.addEventListener('click', (e) => { e.stopPropagation(); actBy('solve', p, btnSolve, btnFail); });
+        btnFail.addEventListener('click', (e) => { e.stopPropagation(); actBy('fail', p, btnSolve, btnFail); });
+        btnDelete.style.display = 'none';
+        btnGraduate.style.display = 'none';
+        actionTd.appendChild(tpl);
+    } else { // type === 'search'
+        cells += `<td>${fmtDate(p.nextReviewDate)}</td>`;
+        const graduateCell = document.createElement('td');
+        if (!p.graduated) {
+            btnGraduate.addEventListener('click', (e) => { e.stopPropagation(); actBy('solve', p, btnGraduate); });
+            graduateCell.appendChild(btnGraduate);
+        } else {
+            graduateCell.textContent = '✔️';
+        }
         btnSolve.style.display = 'none';
         btnFail.style.display = 'none';
+        actionTd.appendChild(btnDelete);
+        tr.innerHTML = cells;
+        tr.appendChild(graduateCell); // 졸업 컬럼 추가
+        tr.appendChild(actionTd); // 액션 컬럼 추가
+        return tr;
     }
-    return node;
+
+    tr.innerHTML = cells;
+    tr.appendChild(actionTd);
+    return tr;
 }
 
 async function loadToday(){
@@ -83,24 +114,12 @@ async function loadToday(){
         const list = await http('GET', API.today());
         tbody.innerHTML='';
         if (!list || !list.length){
-            tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">오늘 복습할 문제가 없습니다.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="color:var(--muted)">오늘 복습할 문제가 없습니다.</td></tr>`;
         } else {
-            list.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${p.category ?? '-'}</td>
-                    <td>${p.number ?? '-'}</td>
-                    <td>${p.name}</td>
-                    <td><code class="badge">LV.${p.currentLevel}</code></td>
-                    <td>${p.reviewCount}</td>
-                    <td>${fmtDate(p.nextReviewDate)}</td>
-                    <td></td>`;
-                tr.children[6].appendChild(createActionButtons(p, 'today'));
-                tbody.appendChild(tr);
-            });
+            list.forEach(p => tbody.appendChild(createProblemRow(p, 'today')));
         }
     } catch(e){
-        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">오늘 목록 로드 실패: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--bad)">오늘 목록 로드 실패: ${e.message}</td></tr>`;
     }
 }
 
@@ -111,31 +130,15 @@ async function performSearch(){
         const n = el('s-number')?.value; const q = el('s-q')?.value?.trim();
         const lv = el('s-level')?.value;  const from = el('s-from')?.value; const to = el('s-to')?.value;
         const sort = el('s-sort')?.value;
-        if (n) params.set('number', n);
-        if (q) params.set('q', q);
-        if (lv) params.set('level', lv);
-        if (from) params.set('from', from);
-        if (to) params.set('to', to);
-        if (sort) params.set('sort', sort);
+        if (n) params.set('number', n); if (q) params.set('q', q); if (lv) params.set('level', lv);
+        if (from) params.set('from', from); if (to) params.set('to', to); if (sort) params.set('sort', sort);
 
         const list = await http('GET', API.search(params));
         tbody.innerHTML='';
         if (!list || !list.length){
             tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">검색 결과가 없습니다.</td></tr>`;
         } else {
-            list.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${p.category ?? '-'}</td>
-                    <td>${p.number ?? '-'}</td>
-                    <td>${p.name}</td>
-                    <td><code class="badge">LV.${p.currentLevel}</code></td>
-                    <td>${p.reviewCount}</td>
-                    <td>${fmtDate(p.nextReviewDate)}</td>
-                    <td></td>`;
-                tr.children[6].appendChild(createActionButtons(p, 'search')); // type: 'search' 전달
-                tbody.appendChild(tr);
-            });
+            list.forEach(p => tbody.appendChild(createProblemRow(p, 'search')));
         }
     } catch(e){
         tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
@@ -144,16 +147,18 @@ async function performSearch(){
 
 // ---- Actions ----
 async function addProblem() {
-    const numVal = el('p-number').value; const number = numVal ? parseInt(numVal,10) : null;
-    const name = el('p-name').value.trim(); const category = el('p-category')?.value || null;
-    const level = parseInt(el('p-level').value,10);
+    const nameInput = el('p-name');
+    const name = nameInput.value.trim();
     if (!name) return toast('문제 이름을 입력해 주세요', 'bad');
+    const numVal = el('p-number').value; const number = numVal ? parseInt(numVal,10) : null;
+    const category = el('p-category')?.value || null;
+    const level = parseInt(el('p-level').value,10);
     const payload = { name, level };
     if (number !== null && !Number.isNaN(number)) payload.number = number;
     if (category) payload.category = category;
     try {
         await http('POST', API.add(), payload);
-        el('p-number').value=''; el('p-name').value=''; el('p-level').value='3';
+        el('p-number').value=''; nameInput.value=''; el('p-level').value='3';
         toast('문제 추가 완료','ok');
         Promise.all([loadToday(), performSearch(), loadDashboard()]);
     } catch(e){ toast('추가 실패: '+e.message, 'bad'); }
@@ -190,8 +195,78 @@ async function quickAction(kind){
     await actBy(kind, {name});
 }
 
+// ---- 월간 히트맵 ----
+let heatmapDate = new Date();
+let heatmapData = new Map();
 
-// ---- Dashboard & Heatmap (테마 연동) ----
+function renderMonthlyHeatmap() {
+    const grid = el('heatmap-grid');
+    const monthEl = el('heatmap-month');
+    const dayHeader = el('heatmap-day-header');
+    if(!grid || !monthEl) return;
+
+    grid.innerHTML = '';
+    dayHeader.innerHTML = ['일', '월', '화', '수', '목', '금', '토'].map(d => `<div>${d}</div>`).join('');
+
+    heatmapDate.setDate(1);
+    const year = heatmapDate.getFullYear();
+    const month = heatmapDate.getMonth();
+    monthEl.textContent = `${year}년 ${month + 1}월`;
+
+    const firstDay = heatmapDate.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+        grid.appendChild(document.createElement('div'));
+    }
+
+    const maxVal = Math.max(...heatmapData.values(), 1);
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        //cell.textContent = day;
+        const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const val = heatmapData.get(key) ?? 0;
+        if (val > 0) {
+            cell.classList.add('has-data');
+            const level = Math.min(4, Math.ceil(val / (maxVal / 4)));
+            cell.dataset.level = String(level);
+            cell.title = `${key}: ${val} solved`;
+        }
+        grid.appendChild(cell);
+    }
+}
+
+async function loadDashboard(){
+    try{
+        const data = await http('GET', API.dashboard());
+        el('streak').textContent=`연속일: ${data.streak}일`;
+        el('today-text').textContent=data.today;
+        const dist=data.levelDistribution||{}; const box=el('level-dist');
+        if(box){ box.innerHTML=''; [3,2,1,0].forEach(l=>{ const v=dist[l]||0; if(v>0){const row=document.createElement('div');
+            row.innerHTML=`<code class="badge">LV.${l}</code> × ${v}`; box.appendChild(row); }});}
+
+        const style = getComputedStyle(document.body);
+        const chartColors = {
+            grid: style.getPropertyValue('--chart-grid').trim(),
+            label: style.getPropertyValue('--chart-label').trim(),
+            bar: style.getPropertyValue('--chart-bar').trim()
+        };
+
+        const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
+        drawBarChart(el('chart-daily'), dL, dV, chartColors);
+        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
+        drawBarChart(el('chart-grad'), gL, gV, chartColors); el('grad-total').textContent=`${gV.reduce((a,b)=>a+b,0)}`;
+
+        heatmapData = new Map();
+        (data.heatmap || []).forEach(({date, count}) => heatmapData.set(date, count));
+        renderMonthlyHeatmap();
+    } catch(e){
+        toast('대시보드 로드 실패: '+e.message, 'bad');
+        renderMonthlyHeatmap();
+    }
+}
+
 function drawBarChart(canvas, labels, values, colors){
     const ctx = canvas.getContext('2d'); const w=canvas.width,h=canvas.height;
     ctx.clearRect(0,0,w,h);
@@ -207,92 +282,36 @@ function drawBarChart(canvas, labels, values, colors){
     for(let i=0;i<labels.length;i+=step){ const x=pad+i*bw+4; ctx.fillText(labels[i].slice(5),x,h-6); }
 }
 
-function renderWeeklyHeatmap(dailyCounts){
-    const grid = el('heatmap-grid');
-    if(!grid) return;
-    grid.innerHTML='';
-
-    const map = new Map();
-    let maxVal = 0;
-    (dailyCounts||[]).forEach(({date,count})=>{ map.set(date,count); if(count>maxVal)maxVal=count; });
-
-    const today = new Date();
-
-    const firstDate = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
-    const start = new Date(firstDate);
-    start.setDate(start.getDate() - start.getDay());
-    const totalDays = Math.floor((today - start) / (1000*60*60*24)) + 1;
-    const weeks = Math.ceil(totalDays / 7);
-
-    for(let w=0; w<weeks; w++){
-        for(let d=0; d<7; d++){
-            const cellDate=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(w*7+d));
-            const key = cellDate.toISOString().slice(0,10);
-            const val = map.get(key)??0;
-            const level = (val === 0) ? 0 : Math.min(4, Math.ceil(val / (Math.max(1, maxVal) / 4)));
-            const cell = document.createElement('div');
-            cell.className='cell';
-            cell.dataset.level = String(level);
-            cell.setAttribute('title',`${key}: ${val}`);
-            grid.appendChild(cell);
-        }
-    }
-    const wrapper = grid.parentElement;
-    if(wrapper) wrapper.scrollLeft = wrapper.scrollWidth;
-}
-
-async function loadDashboard(){
-    try{
-        const data = await http('GET', API.dashboard());
-        el('streak').textContent=`연속일: ${data.streak}일`;
-        const todayEl=el('today-text'); if(todayEl) todayEl.textContent=data.today;
-        const dist=data.levelDistribution||{}; const box=el('level-dist');
-        if(box){ box.innerHTML=''; [3,2,1,0].forEach(l=>{ const v=dist[l]||0; if(v>0){const row=document.createElement('div'); row.innerHTML=`<code class="badge">LV.${l}</code> × ${v}`; box.appendChild(row); }});}
-
-        const isLight = document.body.classList.contains('light');
-        const style = getComputedStyle(document.body);
-        const chartColors = {
-            grid: isLight ? style.getPropertyValue('--chart-grid') : '#27345f',
-            label: isLight ? style.getPropertyValue('--chart-label') : '#8aa0d9',
-            bar: isLight ? style.getPropertyValue('--chart-bar') : '#4f7cff'
-        };
-
-        const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
-        drawBarChart(el('chart-daily'), dL, dV, chartColors);
-        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
-        drawBarChart(el('chart-grad'), gL, gV, chartColors); const gt=el('grad-total'); if(gt) gt.textContent=`${gV.reduce((a,b)=>a+b,0)}`;
-
-        renderWeeklyHeatmap(data.heatmap);
-    } catch(e){
-        toast('대시보드 로드 실패: '+e.message, 'bad');
-        renderWeeklyHeatmap([]);
-    }
-}
-
-
 // ---- Event Listeners & Init ----
 function init() {
-    // 테마 초기화
     const storedTheme = localStorage.getItem('theme') || 'dark';
     applyTheme(storedTheme);
 
-    // 버튼 이벤트 리스너
     el('btn-theme')?.addEventListener('click', toggleTheme);
     el('btn-add')?.addEventListener('click', addProblem);
-    el('btn-refresh-today')?.addEventListener('click', loadToday);
     el('btn-search')?.addEventListener('click', performSearch);
     el('quick-solve')?.addEventListener('click', () => quickAction('solve'));
     el('quick-fail')?.addEventListener('click', () => quickAction('fail'));
     el('btn-refresh-dashboard')?.addEventListener('click', loadDashboard);
 
-    // Date input UX
+    el('p-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') addProblem(); });
+    el('s-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') performSearch(); });
+
+    el('heatmap-prev').addEventListener('click', () => {
+        heatmapDate.setMonth(heatmapDate.getMonth() - 1);
+        renderMonthlyHeatmap();
+    });
+    el('heatmap-next').addEventListener('click', () => {
+        heatmapDate.setMonth(heatmapDate.getMonth() + 1);
+        renderMonthlyHeatmap();
+    });
+
     ['s-from','s-to'].forEach(id=>{
         const input=el(id); if(!input) return;
         const open=()=>{ if(typeof input.showPicker==='function') input.showPicker(); };
         input.addEventListener('click',open); input.addEventListener('focus',open);
     });
 
-    // 초기 데이터 로드
     Promise.all([loadToday(), performSearch()]).then(loadDashboard);
 }
 

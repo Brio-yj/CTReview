@@ -1,66 +1,86 @@
 :root {
-    /* 기본 색상 변수 */
+    /* ... 색상 변수는 이전과 동일 ... */
     --bg: #0b1020;
     --card: #12182b;
-    --card-2: #0f1530;
     --text: #e8eefc;
-    --muted: #9fb1dd;
-    --accent: #4f7cff;
-    --accent-2: #5ad1ff;
-    --ok: #22c55e;
-    --bad: #ef4444;
-    --warn: #f59e0b;
     --border: #1f2742;
-
-    /* 3. 테마 전환을 위한 토스트 색상 변수 */
-    --toast-ok-bg: #0f2c1b;
-    --toast-bad-bg: #2b1515;
-    --toast-info-bg: #0f1530;
-
-    /* 4. 다크모드 히트맵/차트 색상 변수 (가시성 개선) */
-    --chart-grid: #27345f;
-    --chart-label: #8aa0d9;
-    --chart-bar: #4f7cff;
-    --heat-0: #161b22;  /* 더 어둡게 */
-    --heat-1: #0e4429;
-    --heat-2: #006d32;
-    --heat-3: #26a641;
-    --heat-4: #39d353;  /* 더 밝게 */
+    --bad: #ef4444;
+    --heat-0: #2d333b;
+    --heat-1: #465775;
+    --heat-2: #798eb8;
+    --heat-3: #b4c4e0;
+    --heat-4: #e8eefc;
 }
 * { box-sizing: border-box; }
 body {
     margin: 0;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    background:
-            radial-gradient(1200px 1200px at 10% -10%, #1e2747 0%, transparent 50%),
-            radial-gradient(900px 900px at 110% 10%, #12224f 0%, transparent 60%),
-            var(--bg);
+    background: var(--bg);
     color: var(--text);
-    transition: background 0.2s, color 0.2s; /* 3. 부드러운 테마 전환 효과 */
+    transition: background 0.2s, color 0.2s;
 }
 
-/* --- Header --- */
+/* --- 2. Header (레이아웃 수정) --- */
 header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
-.header-row{ display:flex; align-items:stretch; gap:16px; justify-content:space-between; }
-.header-left{ flex:1 1 auto; padding:16px; display:flex; flex-direction:column; }
-.header-left h1{ font-size: 22px; margin: 0 0 6px 0; }
-.sub { color: var(--muted); font-size: 13px; }
-.header-actions{ margin-top:8px; }
+.header-row{ display:flex; align-items:stretch; gap:16px; }
+.header-left{ flex: 1 1 auto; } /* 왼쪽이 남은 공간 모두 차지 */
+.header-right{ flex: 0 0 auto; } /* 오른쪽은 내용만큼만 너비 차지 */
 
-/* --- Heatmap (가시성 개선) --- */
-.heatmap-card h2{ margin:0; padding:12px 12px; border-bottom:1px solid var(--border); font-size:14px; }
-.heatmap-card .body{ padding:12px; }
-.heatmap-wrapper{ display:flex; gap:12px; align-items:flex-start; overflow-x:auto; overflow-y:hidden; padding-bottom:4px; }
-.heatmap-grid{ display:grid; grid-auto-flow:column; grid-auto-columns:16px; grid-template-rows:repeat(7, 16px); gap:4px; width:max-content; }
-.cell{ width:14px; height:14px; border-radius:3px; }
-.cell[data-level="0"] { background-color: var(--heat-0); }
-.cell[data-level="1"] { background-color: var(--heat-1); }
-.cell[data-level="2"] { background-color: var(--heat-2); }
-.cell[data-level="3"] { background-color: var(--heat-3); }
-.cell[data-level="4"] { background-color: var(--heat-4); }
+.header-left .card-body { display: flex; flex-direction: column; height: 100%; }
+.header-left .sub { margin-top: 4px; }
+.header-left .header-actions{ margin-top: auto; } /* 테마 버튼을 하단으로 */
 
-.heatmap-legend{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); margin-top:8px; }
+/* --- 1. 월간 히트맵 스타일 --- */
+.heatmap-card .body { padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    height: 100%; }
+.heatmap-nav { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 12px 0; }
+.heatmap-nav h3 { margin: 0; font-size: 16px; }
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+.heatmap-day-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: 4px;
+}
+.heatmap-cell {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: var(--heat-0);
+}
+.heatmap-cell.has-data {
+    border-color: var(--border);
+    color: var(--text);
+}
+.heatmap-cell[data-level="1"] { background-color: var(--heat-1); }
+.heatmap-cell[data-level="2"] { background-color: var(--heat-2); }
+.heatmap-cell[data-level="3"] { background-color: var(--heat-3); }
+.heatmap-cell[data-level="4"] { background-color: var(--heat-4); }
 
+/* 2. 히트맵 범례(Legend)  */
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* 간격 조절 */
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px; /* 히트맵과의 간격 */
+    align-self: flex-end;
+    margin-bottom: 4px; /* 원하는 간격 값 (예: 4px) */
+}
+.heatmap-legend .swatch {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
 
 /* --- Container & Cards --- */
 .container{ max-width: 1280px; margin: 0 auto; }
@@ -69,14 +89,11 @@ header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    transition: background 0.2s, border-color 0.2s;
 }
 .card h2 { font-size: 16px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .card .body { padding: 14px 16px; }
-.card--fixed{ display:flex; flex-direction:column; min-height:0; }
+.card--fixed .body { display: flex; flex-direction: column; }
 .table-wrap{ flex:1 1 auto; min-height:0; overflow:auto; border-radius:10px; }
-.card--clip{ display:flex; flex-direction:column; min-height:0; }
-.card--clip .body{ overflow:auto; }
 
 /* --- Forms & Buttons --- */
 .stack { display: grid; gap: 12px; }
@@ -125,7 +142,11 @@ canvas { width: 100%; height: auto; aspect-ratio: 640 / 260; background: #0b132a
 .charts { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .footer-note { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
-
+/*BADGES*/
+code.badge {
+    border: none;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
 
 @media (max-width: 1024px){
     .header-row{ flex-direction: column; align-items: stretch; }

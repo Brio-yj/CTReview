@@ -59,8 +59,8 @@ public class ReviewService {
     public List<Problem> listAllActiveOrderByDate() {
         return problemRepo.findByStatusOrderByNextReviewDateAsc(ProblemStatus.ACTIVE);
     }
-    public Problem solve(int number) {
-        Problem p = findByNumberOrThrow(number);
+    public Problem solve(String name) {
+        Problem p = getByNameOrThrow(name);
         // 하루 1회 중복 처리 방지 (Solve)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.SOLVE)) {
             throw new IllegalStateException("오늘은 이미 SOLVE 처리되었습니다.");
@@ -80,8 +80,8 @@ public class ReviewService {
         return p;
     }
 
-    public Problem fail(int number) {
-        Problem p = findByNumberOrThrow(number);
+    public Problem fail(String name) { // 파라미터를 int number -> String name 으로 변경
+        Problem p = getByNameOrThrow(name); // 문제 검색 로직을 getByNameOrThrow로 변경
         // 하루 1회 중복 처리 방지 (Fail)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.FAIL)) {
             throw new IllegalStateException("오늘은 이미 FAIL 처리되었습니다.");
@@ -161,6 +161,25 @@ public class ReviewService {
             p.setReviewCount(intervals.length);
             p.setStatus(ProblemStatus.ACTIVE);
         }
+    }
+
+    @Transactional
+    public Problem graduate(String name) {
+        Problem p = getByNameOrThrow(name);
+
+        // 이미 졸업한 경우, 아무 작업도 하지 않고 반환 (선택적 방어 코드)
+        if (p.getStatus() == ProblemStatus.GRADUATED) {
+            return p;
+        }
+
+        var beforeLevel = p.getCurrentLevel();
+        var beforeCount = p.getReviewCount();
+
+        p.graduate(); // Problem 엔티티의 graduate() 메소드 호출
+
+        // 졸업에 대한 로그 기록
+        writeLog(p, ProblemStatus.GRADUATED, beforeLevel, beforeCount);
+        return p;
     }
 
 }

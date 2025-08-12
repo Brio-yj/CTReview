@@ -30,29 +30,20 @@ public class ProblemController {
         return reviewService.listToday().stream().map(ProblemDto::from).toList();
     }
 
-    // 임의 복습(오늘이 아니어도 가능): Solve
-
-
     @GetMapping("/problems/active")
     public List<ProblemDto> allActive() {
         return reviewService.listAllActiveOrderByDate().stream().map(ProblemDto::from).toList();
     }
-    // Solve/Fail: number 또는 name 중 하나
+
     @PostMapping("/problems/solve")
-    public ActionResultDto solve(@RequestParam(required=false) Integer number,
-                                    @RequestParam(required=false) String name) {
-        Problem p = (name != null && !name.isBlank())
-                ? reviewService.solve(reviewService.getByNameOrThrow(name).getNumber())
-                : reviewService.solve(reviewService.getByNumberOrThrow(number).getNumber());
+    public ActionResultDto solve(@RequestParam String name) { // name만 받도록 수정
+        Problem p = reviewService.solve(name); // name을 그대로 서비스에 전달
         return ActionResultDto.of("SOLVE 완료", ProblemDto.from(p));
     }
 
     @PostMapping("/problems/fail")
-    public ActionResultDto fail(@RequestParam(required=false) Integer number,
-                                @RequestParam(required=false) String name) {
-        Problem p = (name != null && !name.isBlank())
-                ? reviewService.fail(reviewService.getByNameOrThrow(name).getNumber())
-                : reviewService.fail(reviewService.getByNumberOrThrow(number).getNumber());
+    public ActionResultDto fail(@RequestParam String name) { // name만 받도록 수정
+        Problem p = reviewService.fail(name); // name을 그대로 서비스에 전달
         return ActionResultDto.of("FAIL 처리", ProblemDto.from(p));
     }
 

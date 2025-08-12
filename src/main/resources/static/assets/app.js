@@ -217,13 +217,12 @@ function renderWeeklyHeatmap(dailyCounts){
     (dailyCounts||[]).forEach(({date,count})=>{ map.set(date,count); if(count>maxVal)maxVal=count; });
 
     const today = new Date();
-    const earliest = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
-    const diffDays = Math.floor((today - earliest) / (1000*60*60*24)) + 1;
-    const weeks = Math.max(12, Math.ceil(diffDays / 7));
 
-    const start = new Date(today);
-    start.setDate(start.getDate() - (weeks - 1) * 7);
+    const firstDate = dailyCounts && dailyCounts.length ? new Date(dailyCounts[0].date) : today;
+    const start = new Date(firstDate);
     start.setDate(start.getDate() - start.getDay());
+    const totalDays = Math.floor((today - start) / (1000*60*60*24)) + 1;
+    const weeks = Math.ceil(totalDays / 7);
 
     for(let w=0; w<weeks; w++){
         for(let d=0; d<7; d++){
@@ -238,7 +237,6 @@ function renderWeeklyHeatmap(dailyCounts){
             grid.appendChild(cell);
         }
     }
-
     const wrapper = grid.parentElement;
     if(wrapper) wrapper.scrollLeft = wrapper.scrollWidth;
 }

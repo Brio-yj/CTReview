@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CTReview – 스마트 복습</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+    <link rel="stylesheet" href="/assets/app.light.css" />
+    <style>
+        :root{
+            /* 2. 카드 높이 기존 대비 1.5배 상향 조정 */
+            --h-top: 500px;   /* 420px -> 630px */
+            --h-mid-1: 180px; /* 120px -> 180px */
+            --h-mid-2: 450px; /* 300px -> 450px */
+        }
+        .container{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: var(--h-top) var(--h-mid-1) var(--h-mid-2) auto;
+            grid-template-areas:
+                "today add"
+                "search quick"
+                "search filter"
+                "dash dash";
+            gap:16px;
+            padding:0 20px 24px 20px;
+            align-items:stretch;
+        }
+        .q1-today{ grid-area: today; }
+        .q1-search-result{ grid-area: search; }
+        .q2-add{ grid-area: add; }
+        .q2-quick{ grid-area: quick; }
+        .q2-filter{ grid-area: filter; }
+        .q34-dashboard{ grid-area: dash; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-row">
+        <div class="header-left">
+            <h1>CTReview – 스마트 복습</h1>
+            <div class="sub">Solve 전용 졸업, Fail 자동 연장(마지막 간격×2), 자동 이월, 검색/통계/히트맵 지원</div>
+            <div class="header-actions">
+                <button class="btn" id="btn-theme">라이트 모드</button>
+            </div>
+        </div>
+        <section class="card heatmap-card header-right">
+            <h2>주간 히트맵 (최근 12주)</h2>
+            <div class="body">
+                <div class="heatmap-wrapper">
+                    <div class="heatmap-sidebar">
+                        <div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div><div>일</div>
+                    </div>
+                    <div id="heatmap-grid" class="heatmap-grid" aria-label="weekly-heatmap"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+</header>
+
+<div class="container">
+    <section class="card card--clip q2-add">
+        <h2>문제 추가</h2>
+        <div class="body stack">
+            <div>
+                <label>카테고리 (선택)</label>
+                <select id="p-category">
+                    <option value="">선택 안 함</option>
+                    <option value="BAEKJOON">백준</option>
+                    <option value="PROGRAMMERS">프로그래머스</option>
+                </select>
+            </div>
+            <div>
+                <label>문제 번호 (선택)</label>
+                <input id="p-number" type="number" placeholder="없으면 비워두세요" />
+            </div>
+            <div>
+                <label>문제 이름</label>
+                <input id="p-name" type="text" placeholder="예) 부등호 / 문자열 압축" />
+            </div>
+            <div>
+                <label>레벨</label>
+                <select id="p-level">
+                    <option value="3">LV3</option>
+                    <option value="2">LV2</option>
+                    <option value="1">LV1</option>
+                </select>
+            </div>
+            <button class="btn" id="btn-add">추가하기</button>
+            <div class="footer-note">추가 시 정책에 맞춰 첫 복습일이 자동 설정됩니다.</div>
+        </div>
+    </section>
+
+    <section class="card card--clip q2-quick">
+        <h2>퀵 리뷰</h2>
+        <div class="body row" style="gap:12px; flex-wrap:wrap;">
+            <input id="quick-name" type="text" placeholder="문제 이름으로 Solve/Fail" style="max-width:260px;">
+            <button class="btn btn-ok" id="quick-solve">Solve</button>
+            <button class="btn btn-bad" id="quick-fail">Fail</button>
+        </div>
+    </section>
+
+    <section class="card card--clip q2-filter">
+        <h2>검색 / 필터</h2>
+        <div class="body stack">
+            <div class="grid-2">
+                <div>
+                    <label>번호</label>
+                    <input id="s-number" type="number" placeholder="정확 일치" />
+                </div>
+                <div>
+                    <label>레벨</label>
+                    <select id="s-level">
+                        <option value="">전체</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0">0 (졸업)</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label>이름(포함 검색)</label>
+                <input id="s-q" type="text" placeholder="문제명 일부" />
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label>From</label>
+                    <input id="s-from" type="date" placeholder="YYYY-MM-DD" />
+                </div>
+                <div>
+                    <label>To</label>
+                    <input id="s-to" type="date" placeholder="YYYY-MM-DD" />
+                </div>
+            </div>
+            <div>
+                <label>정렬</label>
+                <select id="s-sort">
+                    <option value="dateAsc">날짜 오름차순</option>
+                    <option value="dateDesc">날짜 내림차순</option>
+                    <option value="levelDesc">레벨 내림차순</option>
+                    <option value="levelAsc">레벨 오름차순</option>
+                </select>
+            </div>
+            <button class="btn" id="btn-search">검색</button>
+        </div>
+    </section>
+
+    <section class="card card--fixed q1-today">
+        <h2>오늘 복습</h2>
+        <div class="body" style="padding-bottom:8px; display:flex; flex-direction:column; min-height:0;">
+            <div class="row" style="margin-bottom:10px; gap:10px;">
+                <button class="btn" id="btn-refresh-today">새로고침</button>
+            </div>
+            <div class="table-wrap" id="wrap-today">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>카테고리</th>
+                        <th>번호</th>
+                        <th>이름</th>
+                        <th>레벨</th>
+                        <th>회차</th>
+                        <th>다음 복습</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbl-today"></tbody>
+                </table>
+            </div>
+            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
+                <button class="btn" id="today-prev">이전</button>
+                <code class="badge" id="today-page">1 / 1</code>
+                <button class="btn" id="today-next">다음</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card card--fixed q1-search-result">
+        <h2>검색 결과</h2>
+        <div class="body" style="padding-bottom:8px; display:flex; flex-direction:column; min-height:0;">
+            <div class="table-wrap" id="wrap-search">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>카테고리</th>
+                        <th>번호</th>
+                        <th>이름</th>
+                        <th>레벨</th>
+                        <th>회차</th>
+                        <th>다음 복습</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbl-search"></tbody>
+                </table>
+            </div>
+            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
+                <button class="btn" id="search-prev">이전</button>
+                <code class="badge" id="search-page">1 / 1</code>
+                <button class="btn" id="search-next">다음</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card q34-dashboard">
+        <h2>대시보드</h2>
+        <div class="body">
+            <div class="row" style="justify-content: space-between; margin-bottom: 12px;">
+                <div id="streak" class="pill warn">streak …</div>
+                <button class="btn" id="btn-refresh-dashboard">대시보드 새로고침</button>
+            </div>
+            <div class="grid-3" style="margin-bottom:12px;">
+                <div class="card" style="padding:12px;">
+                    <div class="sub">활성 레벨 분포</div>
+                    <div id="level-dist" style="font-size:14px; margin-top:8px; display:grid; gap:6px;"></div>
+                </div>
+                <div class="card" style="padding:12px;">
+                    <div class="sub">오늘 날짜</div>
+                    <div id="today-text" style="font-size:14px; margin-top:8px;"></div>
+                </div>
+                <div class="card" style="padding:12px;">
+                    <div class="sub">졸업 합계(최근 30일)</div>
+                    <div id="grad-total" style="font-size:22px; margin-top:8px; font-weight:700;"></div>
+                </div>
+            </div>
+            <div class="charts">
+                <div>
+                    <div class="sub" style="margin-bottom:6px;">일일 처리량(최근 30일)</div>
+                    <canvas id="chart-daily" width="640" height="260"></canvas>
+                </div>
+                <div>
+                    <div class="sub" style="margin-bottom:6px;">졸업 추이(최근 30일)</div>
+                    <canvas id="chart-grad" width="640" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<template id="row-actions">
+    <div class="row">
+        <button class="btn btn-ok" data-act="solve">Solve</button>
+        <button class="btn btn-bad" data-act="fail">Fail</button>
+        <button class="btn" data-act="delete">Delete</button>
+    </div>
+</template>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+/* Light Theme Override */
+body.light {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --card-2: #ffffff;
+    --text: #101428;
+    --muted: #6b7690;
+    --border: #e6e9f2;
+
+    /* 3. 테마 전환을 위한 토스트 색상 변수 */
+    --toast-ok-bg: #f0fdf4;
+    --toast-bad-bg: #fef2f2;
+    --toast-info-bg: #f8f9fe;
+
+    /* 4. 라이트모드 히트맵/차트 색상 변수 */
+    --chart-grid: #e5e7eb;
+    --chart-label: #6b7280;
+    --chart-bar: #60a5fa;
+    --heat-0: #ebedf0;
+    --heat-1: #9be9a8;
+    --heat-2: #40c463;
+    --heat-3: #30a14e;
+    --heat-4: #216e39;
+}
+
+body.light {
+    background: var(--bg);
+    color: var(--text);
+}
+body.light .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px rgba(16,20,40,0.06);
+}
+body.light input,
+body.light select {
+    background: #ffffff;
+    border: 1px solid #d9deea;
+    color: #101428;
+}
+body.light input::placeholder { color: #b0b9d1; }
+body.light input[type="date"] { color-scheme: light; background:#ffffff; border:1px solid #d9deea; }
+body.light .btn {
+    border-color: #d9deea;
+    background: #fdfdff;
+    color: #49516d;
+}
+body.light .btn:hover { background: #f8f9fe; }
+body.light .btn-ok { border-color: #a7f3d0; background: #f0fdf4; color: #15803d; }
+body.light .btn-bad { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+body.light table th { color: #49516d; }
+body.light tbody tr:hover td { background: rgba(0,0,0,0.02); }
+body.light .sub { color: #6b7690; }
+body.light .pill { border-color: var(--border); }
+body.light .pill.ok { color:#166534; border-color:#4ade80; background:#dcfce7; }
+body.light .pill.warn { color:#854d0e; border-color:#fcd34d; background:#fefce8; }
+body.light .table tbody tr{ background: #fff; border-color: var(--border); }
+body.light .table td{ border-bottom-color: var(--border); }
+body.light .table-wrap tbody tr:first-child td{ border-top:1px solid var(--border); }
+body.light code.badge {
+    background: transparent !important;
+    border: 1px solid #d9deea;
+    color: #101428;
+}
+body.light canvas { background: #fafbff; border-color: #e5e7eb; }
+/* 라이트모드 토스트는 테두리 색상을 더 진하게 */
+body.light .toast { border-color: #d1d5db; }

@@ -10,8 +10,8 @@
         :root{
             /* 2. 카드 높이 기존 대비 1.5배 상향 조정 */
             --h-top: 500px;   /* 420px -> 630px */
-            --h-mid-1: 180px; /* 120px -> 180px */
-            --h-mid-2: 450px; /* 300px -> 450px */
+            --h-mid-1: 120px; /* 퀵리뷰 높이 조정 */
+            --h-mid-2: 510px; /* 검색/필터 영역 확대 */
         }
         .container{
             display:grid;
@@ -37,21 +37,28 @@
 <body>
 <header>
     <div class="header-row">
-        <div class="header-left">
+        <section class="card header-left">
             <h1>CTReview – 스마트 복습</h1>
             <div class="sub">Solve 전용 졸업, Fail 자동 연장(마지막 간격×2), 자동 이월, 검색/통계/히트맵 지원</div>
             <div class="header-actions">
                 <button class="btn" id="btn-theme">라이트 모드</button>
             </div>
-        </div>
+        </section>
         <section class="card heatmap-card header-right">
-            <h2>주간 히트맵 (최근 12주)</h2>
+            <h2>주간 히트맵</h2>
             <div class="body">
                 <div class="heatmap-wrapper">
                     <div class="heatmap-sidebar">
                         <div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div><div>일</div>
                     </div>
                     <div id="heatmap-grid" class="heatmap-grid" aria-label="weekly-heatmap"></div>
+                </div>
+                <div class="heatmap-legend" aria-label="heatmap-legend">
+                    <span class="cell" data-level="0"></span><span>없음</span>
+                    <span class="cell" data-level="1"></span>
+                    <span class="cell" data-level="2"></span>
+                    <span class="cell" data-level="3"></span>
+                    <span class="cell" data-level="4"></span><span>많음</span>
                 </div>
             </div>
         </section>
@@ -167,11 +174,6 @@
                     <tbody id="tbl-today"></tbody>
                 </table>
             </div>
-            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
-                <button class="btn" id="today-prev">이전</button>
-                <code class="badge" id="today-page">1 / 1</code>
-                <button class="btn" id="today-next">다음</button>
-            </div>
         </div>
     </section>
 
@@ -192,11 +194,6 @@
                     </thead>
                     <tbody id="tbl-search"></tbody>
                 </table>
-            </div>
-            <div class="row controls-bar" style="justify-content:flex-end; gap:6px;">
-                <button class="btn" id="search-prev">이전</button>
-                <code class="badge" id="search-page">1 / 1</code>
-                <button class="btn" id="search-next">다음</button>
             </div>
         </div>
     </section>

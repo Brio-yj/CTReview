@@ -32,8 +32,8 @@ public class ReviewLog {
     private LocalDate actionDate; // KST 기준
 
     // 스냅샷(선택): 전/후 상태 저장
-    private Integer beforeLevel;
+    private Integer beforeStep;
     private Integer beforeReviewCount;
-    private Integer afterLevel;
+    private Integer afterStep;
     private Integer afterReviewCount;
 }

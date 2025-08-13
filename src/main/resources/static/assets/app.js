@@ -4,9 +4,16 @@ const API = {
     today: () => `/api/reviews/today`,
     solveAny: (params) => `/api/problems/solve?${params.toString()}`,
     failAny:  (params) => `/api/problems/fail?${params.toString()}`,
+    graduateAny:(params) => `/api/problems/graduate?${params.toString()}`,
     deleteAny:(params) => `/api/problems?${params.toString()}`,
     search:   (params) => `/api/problems?${params.toString()}`,
-    dashboard:() => `/api/dashboard/summary`
+    dashboard:() => `/api/dashboard/summary`,
+    auth: {
+        me: () => `/api/auth/me`,
+        login: () => `/api/auth/login`,
+        register: () => `/api/auth/register`,
+        logout: () => `/api/auth/logout`
+    }
 };
 
 async function http(method, url, body) {
@@ -22,16 +29,78 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
+function fmtDate(d){
+    if(!d) return '-';
+    const [date,time] = d.split('T');
+    if(time){ return `${date.replace(/-/g,'.')} ${time.slice(0,5)}`; }
+    return date.replace(/-/g,'.');
+}
+const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
+
+let currentUser = null;
+async function checkAuth(){
+    try{
+        currentUser = await http('GET', API.auth.me());
+    }catch{ currentUser = null; }
+    updateAuthUI();
+}
+function updateAuthUI(){
+    const login = el('btn-login');
+    const reg = el('btn-register');
+    const logout = el('btn-logout');
+    const user = el('auth-user');
+    if(currentUser){
+        user.textContent = currentUser.email;
+        login.style.display = 'none';
+        reg.style.display = 'none';
+        logout.style.display = '';
+    }else{
+        user.textContent = '';
+        login.style.display = '';
+        reg.style.display = '';
+        logout.style.display = 'none';
+    }
+}
+async function doLogin(){
+    const email = prompt('이메일?');
+    if(!email) return;
+    const password = prompt('비밀번호?');
+    if(password==null) return;
+    await http('POST', API.auth.login(), {email, password});
+    toast('로그인 완료');
+    await checkAuth();
+}
+async function doRegister(){
+    const email = prompt('이메일?');
+    if(!email) return;
+    const password = prompt('비밀번호?');
+    if(password==null) return;
+    await http('POST', API.auth.register(), {email, password});
+    toast('가입 완료');
+}
+async function doLogout(){
+    await http('POST', API.auth.logout());
+    toast('로그아웃');
+    await checkAuth();
+}
 
 // ================== CORE LOGIC ==================
 
 // ---- 테마 변경 ----
 function applyTheme(theme){
     document.body.classList.toggle('light', theme === 'light');
-    const btn = el('btn-theme');
-    if (btn) btn.textContent = theme === 'light' ? '다크 모드' : '라이트 모드';
-    loadDashboard(); // 테마 변경 시 대시보드(차트, 히트맵) 다시 그리기
+    const icon = el('theme-icon');
+    const label = el('theme-label');
+    if(icon && label){
+        if(theme === 'light'){
+            icon.textContent='☀️';
+            label.textContent='Light';
+        }else{
+            icon.textContent='🌙';
+            label.textContent='Dark';
+        }
+    }
+    loadDashboard();
 }
 function toggleTheme(){
     const currentTheme = document.body.classList.contains('light') ? 'light' : 'dark';
@@ -70,16 +139,17 @@ function createProblemRow(p, type) {
 
     btnDelete.addEventListener('click', (e) => { e.stopPropagation(); delBy(p, btnDelete); });
 
+    const diffTxt = diffMap[p.difficulty] || p.difficulty;
     let cells = `
         <td>${p.category ?? '-'}</td>
         <td>${p.number ?? '-'}</td>
         <td>${p.name}</td>
-        <td><code class="badge">LV.${p.currentLevel}</code></td>
+        <td>${diffTxt}</td>
     `;
     const actionTd = document.createElement('td');
 
     if (type === 'today') {
-        cells += `<td>${p.reviewCount}</td>`;
+        cells += `<td>${p.reviewStep}</td>`;
         btnSolve.addEventListener('click', (e) => { e.stopPropagation(); actBy('solve', p, btnSolve, btnFail); });
         btnFail.addEventListener('click', (e) => { e.stopPropagation(); actBy('fail', p, btnSolve, btnFail); });
         btnDelete.style.display = 'none';
@@ -87,9 +157,10 @@ function createProblemRow(p, type) {
         actionTd.appendChild(tpl);
     } else { // type === 'search'
         cells += `<td>${fmtDate(p.nextReviewDate)}</td>`;
+        cells += `<td>${p.reviewStep}</td>`;
         const graduateCell = document.createElement('td');
-        if (!p.graduated) {
-            btnGraduate.addEventListener('click', (e) => { e.stopPropagation(); actBy('solve', p, btnGraduate); });
+        if (p.status !== 'GRADUATED') {
+            btnGraduate.addEventListener('click', (e) => { e.stopPropagation(); actBy('graduate', p, btnGraduate); });
             graduateCell.appendChild(btnGraduate);
         } else {
             graduateCell.textContent = '✔️';
@@ -98,8 +169,8 @@ function createProblemRow(p, type) {
         btnFail.style.display = 'none';
         actionTd.appendChild(btnDelete);
         tr.innerHTML = cells;
-        tr.appendChild(graduateCell); // 졸업 컬럼 추가
-        tr.appendChild(actionTd); // 액션 컬럼 추가
+        tr.appendChild(graduateCell);
+        tr.appendChild(actionTd);
         return tr;
     }
 
@@ -128,20 +199,20 @@ async function performSearch(){
     try{
         const params = new URLSearchParams();
         const n = el('s-number')?.value; const q = el('s-q')?.value?.trim();
-        const lv = el('s-level')?.value;  const from = el('s-from')?.value; const to = el('s-to')?.value;
+        const diff = el('s-difficulty')?.value;  const from = el('s-from')?.value; const to = el('s-to')?.value;
         const sort = el('s-sort')?.value;
-        if (n) params.set('number', n); if (q) params.set('q', q); if (lv) params.set('level', lv);
+        if (n) params.set('number', n); if (q) params.set('q', q); if (diff) params.set('difficulty', diff);
         if (from) params.set('from', from); if (to) params.set('to', to); if (sort) params.set('sort', sort);
 
         const list = await http('GET', API.search(params));
         tbody.innerHTML='';
         if (!list || !list.length){
-            tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">검색 결과가 없습니다.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="color:var(--muted)">검색 결과가 없습니다.</td></tr>`;
         } else {
             list.forEach(p => tbody.appendChild(createProblemRow(p, 'search')));
         }
     } catch(e){
-        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="color:var(--bad)">검색 실패: ${e.message}</td></tr>`;
     }
 }
 
@@ -152,13 +223,13 @@ async function addProblem() {
     if (!name) return toast('문제 이름을 입력해 주세요', 'bad');
     const numVal = el('p-number').value; const number = numVal ? parseInt(numVal,10) : null;
     const category = el('p-category')?.value || null;
-    const level = parseInt(el('p-level').value,10);
-    const payload = { name, level };
+    const difficulty = el('p-difficulty').value;
+    const payload = { name, difficulty };
     if (number !== null && !Number.isNaN(number)) payload.number = number;
     if (category) payload.category = category;
     try {
         await http('POST', API.add(), payload);
-        el('p-number').value=''; nameInput.value=''; el('p-level').value='3';
+        el('p-number').value=''; nameInput.value=''; el('p-difficulty').value='MEDIUM';
         toast('문제 추가 완료','ok');
         Promise.all([loadToday(), performSearch(), loadDashboard()]);
     } catch(e){ toast('추가 실패: '+e.message, 'bad'); }
@@ -169,7 +240,9 @@ async function actBy(kind, problem, ...btns){
         const params = new URLSearchParams();
         if (problem?.name) { params.set('name', problem.name); }
         else if (problem?.number != null) { params.set('number', problem.number); }
-        const url = (kind==='solve') ? API.solveAny(params) : API.failAny(params);
+        const url = (kind==='solve') ? API.solveAny(params)
+            : (kind==='fail') ? API.failAny(params)
+            : API.graduateAny(params);
         await http('POST', url);
         toast(`${kind.toUpperCase()} 완료`, 'ok');
         Promise.all([loadToday(), performSearch(), loadDashboard()]);
@@ -242,9 +315,9 @@ async function loadDashboard(){
         const data = await http('GET', API.dashboard());
         el('streak').textContent=`연속일: ${data.streak}일`;
         el('today-text').textContent=data.today;
-        const dist=data.levelDistribution||{}; const box=el('level-dist');
-        if(box){ box.innerHTML=''; [3,2,1,0].forEach(l=>{ const v=dist[l]||0; if(v>0){const row=document.createElement('div');
-            row.innerHTML=`<code class="badge">LV.${l}</code> × ${v}`; box.appendChild(row); }});}
+        const dist=data.stepDistribution||{}; const box=el('level-dist');
+        if(box){ box.innerHTML=''; [1,2,3].forEach(l=>{ const v=dist[l]||0; if(v>0){const row=document.createElement('div');
+            row.innerHTML=`단계 ${l} × ${v}`; box.appendChild(row); }});}
 
         const style = getComputedStyle(document.body);
         const chartColors = {
@@ -255,8 +328,9 @@ async function loadDashboard(){
 
         const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
-        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
-        drawBarChart(el('chart-grad'), gL, gV, chartColors); el('grad-total').textContent=`${gV.reduce((a,b)=>a+b,0)}`;
+        const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
+        if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
+        const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }
 
         heatmapData = new Map();
         (data.heatmap || []).forEach(({date, count}) => heatmapData.set(date, count));
@@ -293,6 +367,9 @@ function init() {
     el('quick-solve')?.addEventListener('click', () => quickAction('solve'));
     el('quick-fail')?.addEventListener('click', () => quickAction('fail'));
     el('btn-refresh-dashboard')?.addEventListener('click', loadDashboard);
+    el('btn-login')?.addEventListener('click', doLogin);
+    el('btn-register')?.addEventListener('click', doRegister);
+    el('btn-logout')?.addEventListener('click', doLogout);
 
     el('p-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') addProblem(); });
     el('s-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') performSearch(); });
@@ -312,6 +389,7 @@ function init() {
         input.addEventListener('click',open); input.addEventListener('focus',open);
     });
 
+    checkAuth();
     Promise.all([loadToday(), performSearch()]).then(loadDashboard);
 }
 

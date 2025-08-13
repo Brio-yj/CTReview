@@ -35,9 +35,9 @@ public class ProblemQueryController {
     public List<ProblemDto> search(ProblemSearchRequest req, HttpSession session) {
         User user = authService.getCurrentUser(session);
         log.debug("Search problems userId={} params={}", user != null ? user.getId() : null, req);
-        Stream<Problem> stream = (user != null)
-                ? problemRepo.findByUser(user).stream()
-                : sessionReviewService.listAll(session).stream();
+
+        Stream<Problem> stream = problemRepo.findByUser(user).stream();
+
         if (req.status() == null) {
             stream = stream.filter(p -> p.getStatus() == ProblemStatus.ACTIVE);
         }

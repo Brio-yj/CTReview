@@ -44,8 +44,9 @@ body {
 header { padding: 16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 .header-row { display: flex; align-items: stretch; gap: 16px; }
 
-.header-left { flex: 1 1 auto; }
-.header-right { flex: 0 0 auto; }
+.header-left, .header-right { flex: 1 1 0; min-width: 0; }
+.header-right { display: flex; }
+.header-right .body { width: 100%; }
 
 .header-left .card-body { display: flex; flex-direction: column; height: 100%; }
 .header-left .sub { margin-top: 4px; color: var(--muted); }
@@ -176,8 +177,8 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; display: non
 }
 
 /* --- Table --- */
-.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; white-space: nowrap; }
 th { color: var(--muted); text-align: left; font-weight: 600; text-shadow: 0 0 3px rgba(80, 80, 255, 0.3); }
 tbody tr:hover td { background: rgba(80, 80, 255, 0.1); transition: background 0.2s; }
 .table-wrap tbody tr:first-child td { border-top: 1px solid var(--border); }
@@ -213,6 +214,8 @@ tbody tr:hover td { background: rgba(80, 80, 255, 0.1); transition: background 0
 .pill.ok { color: #00ff80; border-color: #00cc66; background: rgba(0, 255, 128, 0.2); }
 .pill.warn { color: #ffcc00; border-color: #cc9900; background: rgba(255, 204, 0, 0.2); }
 .row { display: flex; align-items: center; gap: 8px; }
+.quick-actions { flex-wrap: wrap; }
+.quick-actions > * { flex: 1 1 120px; }
 canvas {
     width: 100%;
     height: auto;

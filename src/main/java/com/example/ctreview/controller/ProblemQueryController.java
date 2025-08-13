@@ -4,15 +4,13 @@ import com.example.ctreview.dto.ProblemDto;
 import com.example.ctreview.dto.ProblemSearchRequest;
 import com.example.ctreview.entity.Problem;
 import com.example.ctreview.entity.ProblemStatus;
-import com.example.ctreview.entity.User;
+
 import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalTime;
 import java.util.Comparator;
@@ -28,9 +26,8 @@ public class ProblemQueryController {
     private final AuthService authService;
 
     @GetMapping
-    public List<ProblemDto> search(ProblemSearchRequest req, HttpSession session) {
-        User user = authService.getCurrentUser(session);
-        Stream<Problem> stream = problemRepo.findByUser(user).stream();
+    public List<ProblemDto> search(ProblemSearchRequest req) {
+        Stream<Problem> stream = problemRepo.findAll().stream();
         if (req.status() == null) {
             stream = stream.filter(p -> p.getStatus() == ProblemStatus.ACTIVE);
         }

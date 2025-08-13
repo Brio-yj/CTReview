@@ -31,8 +31,8 @@ public class ReviewService {
     // ReviewService.java (가정)
     @Transactional
 // 순서를 (번호, 이름, 카테고리, 레벨)로 수정
-    public Problem createProblem(User user, Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
-        if (problemRepo.existsByNameAndUser(name.trim(), user)) throw new IllegalStateException("이미 존재하는 문제 이름");
+    public Problem createProblem(Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
+        if (problemRepo.existsByName(name.trim())) throw new IllegalStateException("이미 존재하는 문제 이름");
         var p = new Problem();
         p.setUser(user);
         p.setNumber(number);
@@ -56,8 +56,10 @@ public class ReviewService {
         return list.get(0);
     }
 
-    public List<Problem> listToday(User user) {
-        return problemRepo.findByUserAndStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(user, ProblemStatus.ACTIVE, now());
+    public List<Problem> listToday() {
+
+        return problemRepo.findByNextReviewDateAndStatusOrderByReviewStepDesc(today(), ProblemStatus.ACTIVE);
+
     }
 
     public List<Problem> listAllActiveOrderByDate(User user) {
@@ -126,7 +128,8 @@ public class ReviewService {
         problemRepo.delete(problem);
     }
 
-    private void scheduleNextReview(Problem p, LocalDateTime base) {
+    private void scheduleNextReview(Problem p, LocalDate base) {
+
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
@@ -143,9 +146,10 @@ public class ReviewService {
             p.setStatus(ProblemStatus.ACTIVE);
         }
     }
-    private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
+
+    private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        var unit = reviewPolicy.unit();
+
         if (intervals.length == 0) {
             p.setNextReviewDate(base.plus(1, unit));
             p.setStatus(ProblemStatus.ACTIVE);

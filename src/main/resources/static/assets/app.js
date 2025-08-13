@@ -29,60 +29,9 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-function fmtDate(d){
-    if(!d) return '-';
-    const [date,time] = d.split('T');
-    if(time){ return `${date.replace(/-/g,'.')} ${time.slice(0,5)}`; }
-    return date.replace(/-/g,'.');
-}
-const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
+function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
 
-let currentUser = null;
-async function checkAuth(){
-    try{
-        currentUser = await http('GET', API.auth.me());
-    }catch{ currentUser = null; }
-    updateAuthUI();
-}
-function updateAuthUI(){
-    const login = el('btn-login');
-    const reg = el('btn-register');
-    const logout = el('btn-logout');
-    const user = el('auth-user');
-    if(currentUser){
-        user.textContent = currentUser.email;
-        login.style.display = 'none';
-        reg.style.display = 'none';
-        logout.style.display = '';
-    }else{
-        user.textContent = '';
-        login.style.display = '';
-        reg.style.display = '';
-        logout.style.display = 'none';
-    }
-}
-async function doLogin(){
-    const email = prompt('이메일?');
-    if(!email) return;
-    const password = prompt('비밀번호?');
-    if(password==null) return;
-    await http('POST', API.auth.login(), {email, password});
-    toast('로그인 완료');
-    await checkAuth();
-}
-async function doRegister(){
-    const email = prompt('이메일?');
-    if(!email) return;
-    const password = prompt('비밀번호?');
-    if(password==null) return;
-    await http('POST', API.auth.register(), {email, password});
-    toast('가입 완료');
-}
-async function doLogout(){
-    await http('POST', API.auth.logout());
-    toast('로그아웃');
-    await checkAuth();
-}
+const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
 
 // ================== CORE LOGIC ==================
 
@@ -328,6 +277,10 @@ async function loadDashboard(){
 
         const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
+
+        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
+        drawBarChart(el('chart-grad'), gL, gV, chartColors);
+
         const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
         if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
         const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }

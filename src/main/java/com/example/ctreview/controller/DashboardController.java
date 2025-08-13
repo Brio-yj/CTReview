@@ -58,10 +58,24 @@ public class DashboardController {
         }
 
         // stepDistribution
-        Map<Integer, Long> stepDist = problemRepo.findByUserAndStatus(user, ProblemStatus.ACTIVE).stream()
+        Map<Integer, Long> stepDist = problemRepo.findByStatus(ProblemStatus.ACTIVE).stream()
                 .collect(Collectors.groupingBy(Problem::getReviewStep, Collectors.counting()));
 
         // graduations (Solve로 1→0)
+
+
+        Map<LocalDate, Long> gradMap = recentLogs.stream()
+                .filter(l -> l.getAction() == ReviewAction.SOLVE
+                        && l.getBeforeStep() != null && l.getBeforeStep() == 3
+                        && l.getAfterStep() != null && l.getAfterStep() == 0)
+                .collect(Collectors.groupingBy(ReviewLog::getActionDate, Collectors.counting()));
+        List<DashboardSummaryDto.DailyPoint> graduations = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            LocalDate day = from.plusDays(i);
+            graduations.add(new DashboardSummaryDto.DailyPoint(day.toString(), gradMap.getOrDefault(day, 0L)));
+        }
+
+
         // heatmap: 전체 기록
         var allLogs = logRepo.findAll().stream()
                 .filter(l -> Objects.equals(l.getProblem().getUser(), user))
@@ -73,10 +87,11 @@ public class DashboardController {
                 .min(LocalDate::compareTo)
                 .orElse(today);
 
-        Map<String, Long> gradByDiff = problemRepo.findByUserAndStatus(user, ProblemStatus.GRADUATED).stream()
+
+        Map<String, Long> gradByDiff = problemRepo.findByStatus(ProblemStatus.GRADUATED).stream()
                 .collect(Collectors.groupingBy(p -> p.getDifficulty().name(), Collectors.counting()));
 
-        var graduatedProblems = problemRepo.findByUserAndStatus(user, ProblemStatus.GRADUATED).stream()
+        var graduatedProblems = problemRepo.findByStatus(ProblemStatus.GRADUATED).stream()
                 .map(ProblemDto::from)
                 .toList();
         List<DashboardSummaryDto.DailyPoint> heat = new ArrayList<>();
@@ -90,6 +105,9 @@ public class DashboardController {
                 .daily(daily)
                 .stepDistribution(stepDist)
                 .graduationByDifficulty(gradByDiff)
+
+                .graduations(graduations)
+
                 .graduatedProblems(graduatedProblems)
                 .heatmap(heat)
                 .build();

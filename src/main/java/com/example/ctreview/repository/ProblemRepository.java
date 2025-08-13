@@ -13,7 +13,9 @@ import java.util.Optional;
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
     boolean existsByNumber(int number);
     Optional<Problem> findByNumber(int number);
-    List<Problem> findByStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(ProblemStatus status, LocalDateTime date);
+
+    List<Problem> findByNextReviewDateAndStatusOrderByReviewStepDesc(LocalDate date, ProblemStatus status);
+
     List<Problem> findByStatusOrderByNextReviewDateAsc(ProblemStatus status);
     List<Problem> findByStatusAndNextReviewDateBefore(ProblemStatus status, LocalDateTime date);
     List<Problem> findByStatus(ProblemStatus status);

@@ -14,7 +14,7 @@
         }
         .container{
             display:grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr;
             grid-template-rows: var(--h-top) var(--h-mid-1) var(--h-mid-2) auto;
             grid-template-areas:
                 "today add"
@@ -107,8 +107,8 @@
 
     <section class="card card--clip q2-quick">
         <h2>예습</h2>
-        <div class="body row" style="gap:12px; flex-wrap:wrap;">
-            <input id="quick-name" type="text" placeholder="문제 이름으로 Solve/Fail" style="max-width:260px;">
+        <div class="body">
+            <input id="quick-name" type="text" placeholder="문제 이름으로 Solve/Fail">
             <button class="btn btn-ok" id="quick-solve">Solve</button>
             <button class="btn btn-bad" id="quick-fail">Fail</button>
         </div>
@@ -163,7 +163,15 @@
         <h2>오늘 복습</h2>
         <div class="body">
             <div class="table-wrap" id="wrap-today">
-                <table>
+                <table class="table table-today">
+                    <colgroup>
+                        <col class="col-cat"     style="width: 110px;">
+                        <col class="col-num"     style="width: 90px;">
+                        <col class="col-name">                 <!-- 남는 폭 전부 사용 -->
+                        <col class="col-diff"    style="width: 88px;">
+                        <col class="col-step"    style="width: 100px;">
+                        <col class="col-actions" style="width: 160px;">
+                    </colgroup>
                     <thead>
                     <tr>
                         <th>카테고리</th>
@@ -184,11 +192,17 @@
         <h2>검색 결과</h2>
         <div class="body">
             <div class="table-wrap" id="wrap-search">
-                <table>
+                <table class="table table-search">
+                    <colgroup>
+                        <col class="col-name">                 <!-- 남는 폭 전부 사용 -->
+                        <col class="col-diff"    style="width: 88px;">
+                        <col class="col-date"    style="width: 132px;">
+                        <col class="col-step"    style="width: 100px;">
+                        <col class="col-grad"    style="width: 90px;">
+                        <col class="col-delete"  style="width: 90px;">
+                    </colgroup>
                     <thead>
                     <tr>
-                        <th>카테고리</th>
-                        <th>번호</th>
                         <th>이름</th>
                         <th>난이도</th>
                         <th>복습날짜</th>

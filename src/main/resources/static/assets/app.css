@@ -51,7 +51,7 @@ header { padding: 16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 .header-left .sub { margin-top: 4px; color: var(--muted); }
 
 /* --- 1. 월간 히트맵 스타일 --- */
-.heatmap-card .body { padding: 8px 12px; display: flex; flex-direction: column; height: 100%; }
+.heatmap1580 .body { padding: 8px 12px; display: flex; flex-direction: column; height: 100%; }
 .heatmap-nav { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 12px 0; }
 .heatmap-nav h3 { margin: 0; font-size: 16px; text-shadow: 0 0 5px rgba(80, 80, 255, 0.5); }
 .heatmap-grid {
@@ -116,12 +116,55 @@ header { padding: 16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
     text-shadow: 0 0 5px rgba(80, 80, 255, 0.5);
 }
 .card .body { padding: 14px 16px; }
-.card--fixed .body { display: flex; flex-direction: column; }
-.table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; border-radius: 10px; }
+
+/* [최종 수정] 핵심 변경 부분 시작 */
+.card--fixed {
+    display: flex;
+    flex-direction: column;
+}
+
+.card--fixed h2 {
+    flex-shrink: 0;
+}
+
+.card--fixed .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border-radius: 10px;
+    max-width: 100%; /* Ensure table-wrap doesn't exceed parent width */
+}
+
+/* New styles to handle long content in tables */
+.table-wrap.today, .table-wrap.search {
+    max-width: 100%; /* Ensure consistent width */
+    overflow: auto;
+}
+
+.table-wrap.today .table, .table-wrap.search .table {
+    min-width: 600px; /* Minimum width to ensure table layout; adjust as needed */
+}
+
+/* Ensure long text in table cells wraps or is truncated */
+.table td, .table th {
+    max-width: 200px; /* Limit cell width to prevent excessive stretching */
+    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
+    white-space: normal; /* Allow text wrapping within the max-width */
+}
+
+/* [최종 수정] 핵심 변경 부분 끝 */
 
 /* --- Forms & Buttons --- */
 .stack { display: grid; gap: 12px; }
-label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px;  }
 input, select {
     width: 100%;
     padding: 10px 12px;
@@ -176,9 +219,23 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; display: non
 }
 
 /* --- Table --- */
-.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
-th { color: var(--muted); text-align: left; font-weight: 600; text-shadow: 0 0 3px rgba(80, 80, 255, 0.3); }
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    text-align: left;
+}
+
+th {
+    color: var(--muted);
+    font-weight: 600;
+    text-shadow: 0 0 3px rgba(80, 80, 255, 0.3);
+}
 tbody tr:hover td { background: rgba(80, 80, 255, 0.1); transition: background 0.2s; }
 .table-wrap tbody tr:first-child td { border-top: 1px solid var(--border); }
 
@@ -306,3 +363,166 @@ code.badge {
     background: linear-gradient(45deg, #00ccff, #ff00ff); /* Neon scrollbar */
     border-radius: 4px;
 }
+
+/* assets/app.css 파일 맨 아래에 추가 */
+
+/* 툴팁을 위한 스타일 */
+.has-tooltip {
+    position: relative; /* 툴팁의 위치 기준이 됩니다. */
+}
+
+/* 마우스를 올렸을 때 보여줄 툴팁(가상 요소) */
+.has-tooltip:hover::before {
+    /* [핵심] content 속성을 이용해 data-category 속성값을 가져와 표시합니다. */
+    content: '카테고리: ' attr(data-category);
+
+    position: absolute;
+    bottom: 100%; /* 행의 바로 위에 표시 */
+    left: 20px;   /* 왼쪽에서 20px 떨어진 곳에 표시 */
+    z-index: 10;
+
+    /* 툴팁 디자인 */
+    background: var(--card-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    white-space: nowrap; /* 툴팁 내용은 한 줄로 표시 */
+    box-shadow: var(--card-shadow);
+
+    /* 부드러운 애니메이션 효과 */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-5px); /* 살짝 위로 떠오르는 효과 */
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 평상시에는 툴팁을 숨깁니다. */
+.has-tooltip::before {
+    content: '';
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* 툴팁이 마우스 이벤트를 방해하지 않도록 설정 */
+}
+/* === 표 컬럼 고정 & 이름만 말줄임 === */
+
+/* 공통: 테이블은 고정 레이아웃 */
+.table { table-layout: fixed; }
+
+/* 검색결과: 이름만 말줄임, 나머지는 줄바꿈 금지 + 가운데 정렬 보조 */
+.table-search td:nth-child(1),
+.table-search th:nth-child(1) {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;  /* 이름 셀만 말줄임 */
+}
+
+.table-search td:nth-child(n+2),
+.table-search th:nth-child(n+2) {
+    white-space: nowrap;      /* 난이도~삭제는 줄바꿈 금지로 폭 유지 */
+}
+
+/* 오늘표: 이름만 말줄임, 액션 영역은 줄바꿈 금지 */
+.table-today td:nth-child(3),
+.table-today th:nth-child(3) {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;  /* 이름 셀만 말줄임 */
+}
+.table-today td:nth-child(6),
+.table-today th:nth-child(6) {
+    white-space: nowrap;      /* 버튼들 줄바꿈 금지 */
+}
+
+/* 버튼이 길어도 줄바꿈 안 되게 */
+.table .btn { white-space: nowrap; }
+
+/* 헤더/바디 세로정렬 정돈(선택) */
+.table th, .table td { vertical-align: middle; }
+
+/* 클릭으로 선택된 행에 대한 스타일 */
+tr.selected td {
+    background-color: rgba(80, 80, 255, 0.2) !important; /* 기존 hover 색상과 유사하게, !important로 우선순위 확보 */
+    transition: background-color 0.2s ease;
+}
+/* 클릭 기반 툴팁 스타일 */
+#name-tooltip {
+    position: absolute;
+    background: var(--card-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+    box-shadow: var(--card-shadow);
+    z-index: 1000;
+    display: none; /* 기본적으로 숨김 */
+    backdrop-filter: blur(8px);
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    cursor: text; /* 텍스트 선택 커서 표시 */
+    user-select: text; /* 텍스트 선택 허용 */
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* 선택된 행 스타일 강화 */
+tr.selected {
+    position: relative;
+}
+
+/* 예습(quick) 카드의 버튼 레이아웃 개선 */
+.q2-quick .body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap; /* 줄바꿈 방지 */
+}
+
+.q2-quick #quick-name {
+    flex: 1 1 auto; /* 남은 공간을 모두 차지하되 최소 크기 유지 */
+    min-width: 180px; /* 최소 너비 설정 */
+    max-width: none; /* 기존 max-width 제거 */
+}
+
+.q2-quick .btn {
+    flex: 0 0 auto; /* 버튼 크기 고정 */
+    white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+}
+/* 툴팁 호버 효과 추가 */
+#name-tooltip:hover {
+    background: var(--card);
+    transform: translateY(-7px);
+    box-shadow: 0 0 20px rgba(80, 80, 255, 0.6), 0 0 35px rgba(80, 80, 255, 0.4);
+}
+
+/* 컨테이너 그리드 레이아웃 개선 */
+@media (min-width: 1025px) {
+    .container {
+        grid-template-columns: 1.5fr minmax(300px, 1fr); /* 우측 컬럼 최소 너비 보장 */
+    }
+}
+
+/* 중간 화면 크기에서의 대응 */
+@media (max-width: 1200px) and (min-width: 1025px) {
+    .container {
+        grid-template-columns: 1.2fr 1fr; /* 비율 조정 */
+    }
+}
+
+/* 모바일에서는 세로 배치로 변경 */
+@media (max-width: 768px) {
+    .q2-quick .body {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .q2-quick #quick-name {
+        max-width: none;
+    }
+}
+

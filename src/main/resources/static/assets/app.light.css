@@ -162,3 +162,24 @@ body.light .pill-grad.LOW {
 }
 
 body.light #grad-list{background-color: #F5F5FF;}
+
+/* 라이트 모드에서도 선택된 행 스타일 적용 */
+body.light tr.selected td {
+    background-color: rgba(102, 102, 255, 0.15) !important;
+}
+
+/* 라이트 모드 툴팁 스타일 */
+body.light #name-tooltip {
+    background: var(--card-2);
+    color: var(--text);
+    border-color: var(--border);
+    box-shadow: 0 0 15px rgba(102, 102, 255, 0.4), 0 0 30px rgba(102, 102, 255, 0.2);
+    cursor: text;
+    user-select: text;
+}
+
+body.light #name-tooltip:hover {
+    background: var(--card);
+    transform: translateY(-7px);
+    box-shadow: 0 0 20px rgba(102, 102, 255, 0.6), 0 0 35px rgba(102, 102, 255, 0.3);
+}

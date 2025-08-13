@@ -25,20 +25,11 @@ header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 .header-row{ display:flex; align-items:stretch; gap:16px; }
 
 /* 🔽 이 부분을 수정하세요 🔽 */
-.header-left {
-    /* flex: 1 1 0; 를 아래 코드로 변경 */
-    flex: 0 0 calc(50% - 8px); /* 50% 너비에서 gap(16px)의 절반을 뺍니다 */
-}
-.header-center {
-    /* flex: 1 1 0; 를 아래 코드로 변경 */
-    flex: 1 1 auto; /* 남은 공간을 차지하도록 변경 */
-}
+.header-left { flex: 1 1 auto; }
 .header-right{ flex: 0 0 auto; }
-.header-center .card-body{ display:flex; justify-content:center; align-items:center; }
 
 .header-left .card-body { display: flex; flex-direction: column; height: 100%; }
 .header-left .sub { margin-top: 4px; }
-.header-left .header-actions{ margin-top: auto; } /* 테마 버튼을 하단으로 */
 
 /* --- 1. 월간 히트맵 스타일 --- */
 .heatmap-card .body { padding: 8px 12px;
@@ -150,6 +141,7 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
 .row { display:flex; align-items:center; gap:8px; }
 canvas { width: 100%; height: auto; aspect-ratio: 640 / 260; background: #0b132a; border:1px solid #1b2445; border-radius: 10px; }
 .charts { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.charts > div { display:flex; flex-direction:column; min-width:0; }
 .footer-note { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
 /*BADGES*/
@@ -169,6 +161,7 @@ code.badge {
 /* app.css 파일 하단에 추가 */
 
 .grad-list-container {
+    flex: 1 1 auto;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -176,7 +169,6 @@ code.badge {
     background: #0b132a;
     border:1px solid #1b2445;
     border-radius: 10px;
-    height: 260px;
     width: 100%;
     overflow-y: auto;
     overflow-x: auto;

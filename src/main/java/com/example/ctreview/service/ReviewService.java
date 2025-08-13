@@ -45,6 +45,7 @@ public class ReviewService {
         p.setDifficulty(difficulty);
         p.setReviewStep(1);
         p.setReviewCount(0);
+        p.setStatus(ProblemStatus.ACTIVE);
         scheduleNextReview(p, now());
         return problemRepo.save(p);
     }

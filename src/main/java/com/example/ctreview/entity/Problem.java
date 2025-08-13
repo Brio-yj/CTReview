@@ -36,7 +36,7 @@ public class Problem {
     private LocalDateTime nextReviewDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false) private ProblemStatus status = ProblemStatus.ACTIVE;
+    @Column(nullable = false) private ProblemStatus status;
 
     @ManyToOne
     private User user;

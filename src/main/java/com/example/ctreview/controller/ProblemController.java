@@ -34,7 +34,6 @@ public class ProblemController {
         log.debug("Create problem userId={} number={} name={}", user != null ? user.getId() : null, req.number(), req.name());
 
         return ProblemDto.from(reviewService.createProblem(user, req.number(), req.name(), req.category(), req.difficulty()));
-
     }
 
     @GetMapping("/reviews/today")

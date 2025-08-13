@@ -9,12 +9,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({NoSuchElementException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handleNotFound(Exception e) {
+        log.debug("NotFound: {}", e.getMessage());
         return Map.of("error", "NOT_FOUND", "message", e.getMessage());
     }
 
@@ -24,6 +28,7 @@ public class GlobalExceptionHandler {
         String msg = e instanceof MethodArgumentNotValidException manve ?
                 (manve.getBindingResult().getFieldError() != null ? manve.getBindingResult().getFieldError().getDefaultMessage() : "잘못된 요청")
                 : e.getMessage();
+        log.debug("BadRequest: {}", msg);
         return Map.of("error", "BAD_REQUEST", "message", msg);
     }
 }

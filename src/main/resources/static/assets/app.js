@@ -17,12 +17,17 @@ const API = {
 };
 
 async function http(method, url, body) {
+    console.debug(`[HTTP] ${method} ${url}`, body ?? '');
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
     const res = await fetch(url, opts);
+    console.debug(`[HTTP] ${method} ${url} -> ${res.status} ${res.statusText}`);
     if (!res.ok) {
         let msg = `${res.status} ${res.statusText}`;
-        try { const j = await res.json(); msg = j.message || JSON.stringify(j); } catch {}
+        try { const j = await res.json(); msg = j.message || JSON.stringify(j); } catch (e) {
+            console.error('[HTTP] error parsing body', e);
+        }
+        console.error(`[HTTP] ${method} ${url} failed: ${msg}`);
         throw new Error(msg);
     }
     if (res.status === 204) return null;

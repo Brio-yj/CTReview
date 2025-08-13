@@ -5,6 +5,7 @@ import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.repository.ReviewLogRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReviewService {
     private final ProblemRepository problemRepo;
     private final ReviewLogRepository logRepo;
@@ -33,6 +35,7 @@ public class ReviewService {
     @Transactional
     public Problem createProblem(User user, Integer number, String name,
                                  ProblemCategory category, ProblemDifficulty difficulty) {
+        log.debug("createProblem userId={} number={} name={}", user != null ? user.getId() : null, number, name);
         if (problemRepo.existsByNameAndUser(name.trim(), user)) throw new IllegalStateException("이미 존재하는 문제 이름");
         var p = new Problem();
         p.setUser(user);
@@ -58,13 +61,16 @@ public class ReviewService {
     }
 
     public List<Problem> listToday(User user) {
+        log.debug("listToday userId={}", user != null ? user.getId() : null);
         return problemRepo.findByUserAndStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(user, ProblemStatus.ACTIVE, now());
     }
 
     public List<Problem> listAllActiveOrderByDate(User user) {
+        log.debug("listAllActiveOrderByDate userId={}", user != null ? user.getId() : null);
         return problemRepo.findByUserAndStatusOrderByNextReviewDateAsc(user, ProblemStatus.ACTIVE);
     }
     public Problem solve(User user, String name) {
+        log.debug("solve userId={} name={}", user != null ? user.getId() : null, name);
         Problem p = getByNameOrThrow(user, name);
         // 하루 1회 중복 처리 방지 (Solve)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.SOLVE)) {
@@ -86,6 +92,7 @@ public class ReviewService {
     }
 
     public Problem fail(User user, String name) {
+        log.debug("fail userId={} name={}", user != null ? user.getId() : null, name);
         Problem p = getByNameOrThrow(user, name);
         // 하루 1회 중복 처리 방지 (Fail)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.FAIL)) {
@@ -119,6 +126,7 @@ public class ReviewService {
     }
     @Transactional
     public void deleteByName(User user, String name) {
+        log.debug("deleteByName userId={} name={}", user != null ? user.getId() : null, name);
         Problem problem = problemRepo.findByNameAndUser(name, user)
                 .orElseThrow(() -> new NoSuchElementException("해당 이름의 문제가 없습니다."));
         problemRepo.delete(problem);
@@ -160,6 +168,7 @@ public class ReviewService {
 
     @Transactional
     public Problem graduate(User user, String name) {
+        log.debug("graduate userId={} name={}", user != null ? user.getId() : null, name);
         Problem p = getByNameOrThrow(user, name);
 
         // 이미 졸업한 경우, 아무 작업도 하지 않고 반환 (선택적 방어 코드)

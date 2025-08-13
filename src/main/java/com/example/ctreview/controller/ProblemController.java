@@ -25,9 +25,11 @@ public class ProblemController {
     private final AuthService authService;
 
     @PostMapping("/problems")
-    public ProblemDto create(HttpSession session, @Valid @RequestBody ProblemCreateRequest req) {
-        User user = authService.getCurrentUser(session);
-        return ProblemDto.from(reviewService.createProblem(user, req.number(), req.name(), req.category(), req.difficulty()));
+
+
+    public ProblemDto create(@Valid @RequestBody ProblemCreateRequest req) {
+        return ProblemDto.from(reviewService.createProblem(req.number(), req.name(), req.category(), req.difficulty()));
+
     }
 
     @GetMapping("/reviews/today")
@@ -43,23 +45,26 @@ public class ProblemController {
     }
 
     @PostMapping("/problems/solve")
-    public ActionResultDto solve(HttpSession session, @RequestParam String name) {
-        User user = authService.getCurrentUser(session);
-        Problem p = reviewService.solve(user, name);
+
+    public ActionResultDto solve(@RequestParam String name) {
+        Problem p = reviewService.solve(name);
+
         return ActionResultDto.of("SOLVE 완료", ProblemDto.from(p));
     }
 
     @PostMapping("/problems/fail")
-    public ActionResultDto fail(HttpSession session, @RequestParam String name) {
-        User user = authService.getCurrentUser(session);
-        Problem p = reviewService.fail(user, name);
+
+    public ActionResultDto fail(@RequestParam String name) {
+        Problem p = reviewService.fail(name);
+
         return ActionResultDto.of("FAIL 처리", ProblemDto.from(p));
     }
 
     @PostMapping("/problems/graduate")
-    public ActionResultDto graduate(HttpSession session, @RequestParam String name) {
-        User user = authService.getCurrentUser(session);
-        Problem p = reviewService.graduate(user, name);
+
+    public ActionResultDto graduate(@RequestParam String name) {
+        Problem p = reviewService.graduate(name);
+
         return ActionResultDto.of("GRADUATE", ProblemDto.from(p));
     }
 

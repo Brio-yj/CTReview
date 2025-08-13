@@ -4,5 +4,5 @@ import java.time.temporal.ChronoUnit;
 
 public interface ReviewPolicy {
     int [] intervals(int step);
-    ChronoUnit unit();
+
 }

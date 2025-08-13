@@ -84,6 +84,8 @@ async function doLogout(){
     await checkAuth();
 }
 
+const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
+
 // ================== CORE LOGIC ==================
 
 // ---- 테마 변경 ----
@@ -328,6 +330,12 @@ async function loadDashboard(){
 
         const daily=Array.isArray(data.daily)?data.daily:[]; const dL=daily.map(d=>d.date), dV=daily.map(d=>(+d.count||0));
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
+
+
+        const grads=Array.isArray(data.graduations)?data.graduations:[]; const gL=grads.map(d=>d.date), gV=grads.map(d=>(+d.count||0));
+        drawBarChart(el('chart-grad'), gL, gV, chartColors);
+
+
         const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
         if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
         const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }

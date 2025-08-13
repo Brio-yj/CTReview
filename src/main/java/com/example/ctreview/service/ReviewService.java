@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
-import java.time.Clock;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -31,9 +31,11 @@ public class ReviewService {
     }
 
     @Transactional
-    public Problem createProblem(User user, Integer number, String name,
-                                 ProblemCategory category, ProblemDifficulty difficulty) {
-        if (problemRepo.existsByNameAndUser(name.trim(), user)) throw new IllegalStateException("이미 존재하는 문제 이름");
+
+// 순서를 (번호, 이름, 카테고리, 레벨)로 수정
+    public Problem createProblem(Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
+        if (problemRepo.existsByName(name.trim())) throw new IllegalStateException("이미 존재하는 문제 이름");
+
         var p = new Problem();
         p.setUser(user);
         p.setNumber(number);
@@ -57,8 +59,12 @@ public class ReviewService {
         return list.get(0);
     }
 
-    public List<Problem> listToday(User user) {
-        return problemRepo.findByUserAndStatusAndNextReviewDateLessThanEqualOrderByReviewStepDesc(user, ProblemStatus.ACTIVE, now());
+
+    public List<Problem> listToday() {
+
+        return problemRepo.findByNextReviewDateAndStatusOrderByReviewStepDesc(today(), ProblemStatus.ACTIVE);
+
+
     }
 
     public List<Problem> listAllActiveOrderByDate(User user) {
@@ -102,6 +108,12 @@ public class ReviewService {
         return p;
     }
 
+    private Problem findByNumberOrThrow(User user, int number) {
+        return problemRepo.findByNumberAndUser(number, user)
+                .orElseThrow(() -> new NoSuchElementException("해당 번호의 문제가 없습니다."));
+    }
+
+
     private void writeLog(Problem p, ReviewAction action, int beforeStep, int beforeCount) {
         logRepo.save(ReviewLog.builder()
                 .problem(p)
@@ -124,31 +136,46 @@ public class ReviewService {
         problemRepo.delete(problem);
     }
 
-    private void scheduleNextReview(Problem p, LocalDateTime base) {
+
+    private void scheduleNextReview(Problem p, LocalDate base) {
+
+
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
         if (intervals.length == 0) {
             p.graduate();
             return;
         }
         var unit = reviewPolicy.unit();
-        int index = Math.min(p.getReviewCount(), intervals.length - 1);
-        int amt = intervals[index];
-        activate(p, base.plus(amt, unit));
+
+        if (p.getReviewCount() < intervals.length) {
+            int amt = intervals[p.getReviewCount()];
+            p.setNextReviewDate(base.plus(amt, unit));
+            p.setStatus(ProblemStatus.ACTIVE);
+        } else {
+            int last = intervals[intervals.length - 1];
+            p.setNextReviewDate(base.plus(last, unit));
+            p.setStatus(ProblemStatus.ACTIVE);
+        }
     }
 
-    private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
+    private void scheduleNextReviewOnFail(Problem p, LocalDate base) {
         int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        var unit = reviewPolicy.unit();
+
         if (intervals.length == 0) {
-            activate(p, base.plus(1, unit));
+            p.setNextReviewDate(base.plus(1, unit));
+            p.setStatus(ProblemStatus.ACTIVE);
+
             return;
         }
         if (p.getReviewCount() < intervals.length) {
             int amt = intervals[p.getReviewCount()];
-            activate(p, base.plus(amt, unit));
+
+            p.setNextReviewDate(base.plus(amt, unit));
+            p.setStatus(ProblemStatus.ACTIVE);
         } else {
             int last = intervals[intervals.length - 1];
-            activate(p, base.plus(last * 2L, unit));
+            p.setNextReviewDate(base.plus(last * 2L, unit));
+
             p.setReviewCount(intervals.length);
         }
     }

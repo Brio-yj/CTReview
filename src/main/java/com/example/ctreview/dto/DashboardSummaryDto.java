@@ -11,6 +11,10 @@ public record DashboardSummaryDto(
         List<DailyPoint> daily,
         Map<Integer, Long> stepDistribution,
         Map<String, Long> graduationByDifficulty,
+
+        List<DailyPoint> graduations,
+
+
         List<ProblemDto> graduatedProblems,
         List<DailyPoint> heatmap
 ) {

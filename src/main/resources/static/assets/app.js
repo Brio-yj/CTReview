@@ -330,7 +330,18 @@ async function loadDashboard(){
         drawBarChart(el('chart-daily'), dL, dV, chartColors);
         const gradDist=data.graduationByDifficulty||{}; const gt=el('grad-total');
         if(gt){ gt.textContent=`상 ${gradDist.HIGH||0} / 중 ${gradDist.MEDIUM||0} / 하 ${gradDist.LOW||0}`; }
-        const tbl=el('tbl-grad'); if(tbl){ tbl.innerHTML=''; (data.graduatedProblems||[]).forEach(p=>{ const tr=document.createElement('tr'); const diff=diffMap[p.difficulty]||p.difficulty; tr.innerHTML=`<td>${p.name}</td><td>${diff}</td>`; tbl.appendChild(tr); }); }
+
+        const gradListContainer = el('grad-list');
+        if(gradListContainer){
+            gradListContainer.innerHTML = ''; // 컨테이너 비우기
+            (data.graduatedProblems||[]).forEach(p => {
+                const pill = document.createElement('div');
+                pill.className = `pill-grad ${p.difficulty}`;
+                pill.textContent = p.name;
+                pill.title = `난이도: ${diffMap[p.difficulty] || p.difficulty}`;
+                gradListContainer.appendChild(pill);
+            });
+        }
 
         heatmapData = new Map();
         (data.heatmap || []).forEach(({date, count}) => heatmapData.set(date, count));

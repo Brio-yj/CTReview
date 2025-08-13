@@ -5,10 +5,14 @@ import com.example.ctreview.dto.ProblemDto;
 import com.example.ctreview.entity.*;
 import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.repository.ReviewLogRepository;
+import com.example.ctreview.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpSession;
+import java.util.Objects;
 
 import java.time.*;
 import java.util.*;
@@ -21,9 +25,11 @@ public class DashboardController {
     private final ReviewLogRepository logRepo;
     private final ProblemRepository problemRepo;
     private final Clock clock;
+    private final AuthService authService;
 
     @GetMapping("/summary")
-    public DashboardSummaryDto summary() {
+    public DashboardSummaryDto summary(HttpSession session) {
+        User user = authService.getCurrentUser(session);
         LocalDate today = LocalDate.now(clock);
         LocalDate from = today.minusDays(29);
 
@@ -31,14 +37,18 @@ public class DashboardController {
         int streak = 0;
         LocalDate d = today;
         while (true) {
-            var logs = logRepo.findByActionDateBetween(d, d);
+            var logs = logRepo.findByActionDateBetween(d, d).stream()
+                    .filter(l -> Objects.equals(l.getProblem().getUser(), user))
+                    .toList();
             if (logs.isEmpty()) break;
             streak++;
             d = d.minusDays(1);
         }
 
         // daily (최근 30일)
-        var recentLogs = logRepo.findByActionDateBetween(from, today);
+        var recentLogs = logRepo.findByActionDateBetween(from, today).stream()
+                .filter(l -> Objects.equals(l.getProblem().getUser(), user))
+                .toList();
         Map<LocalDate, Long> dailyMap = recentLogs.stream()
                 .collect(Collectors.groupingBy(l -> l.getActionDate(), Collectors.counting()));
         List<DashboardSummaryDto.DailyPoint> daily = new ArrayList<>();
@@ -67,13 +77,16 @@ public class DashboardController {
 
 
         // heatmap: 전체 기록
-        var allLogs = logRepo.findAll();
+        var allLogs = logRepo.findAll().stream()
+                .filter(l -> Objects.equals(l.getProblem().getUser(), user))
+                .toList();
         Map<LocalDate, Long> heatMap = allLogs.stream()
                 .collect(Collectors.groupingBy(ReviewLog::getActionDate, Collectors.counting()));
         LocalDate heatFrom = allLogs.stream()
                 .map(ReviewLog::getActionDate)
                 .min(LocalDate::compareTo)
                 .orElse(today);
+
 
         Map<String, Long> gradByDiff = problemRepo.findByStatus(ProblemStatus.GRADUATED).stream()
                 .collect(Collectors.groupingBy(p -> p.getDifficulty().name(), Collectors.counting()));

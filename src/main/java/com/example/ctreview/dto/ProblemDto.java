@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 public record ProblemDto(
         Integer number, String name, String category,
         String difficulty,
-
         int reviewStep, int reviewCount, LocalDate nextReviewDate, String status
 
 ) {

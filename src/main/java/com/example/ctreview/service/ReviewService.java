@@ -34,6 +34,7 @@ public class ReviewService {
     public Problem createProblem(Integer number, String name, ProblemCategory category, ProblemDifficulty difficulty) {
         if (problemRepo.existsByName(name.trim())) throw new IllegalStateException("이미 존재하는 문제 이름");
         var p = new Problem();
+        p.setUser(user);
         p.setNumber(number);
         p.setName(name.trim());
         p.setCategory(category);
@@ -43,13 +44,13 @@ public class ReviewService {
         scheduleNextReview(p, now());
         return problemRepo.save(p);
     }
-    public Problem getByNameOrThrow(String name) {
-        return problemRepo.findByName(name.trim())
+    public Problem getByNameOrThrow(User user, String name) {
+        return problemRepo.findByNameAndUser(name.trim(), user)
                 .orElseThrow(() -> new NoSuchElementException("문제 미존재(이름)"));
     }
 
-    public Problem getByNumberOrThrow(Integer number) {
-        var list = problemRepo.findAllByNumber(number);
+    public Problem getByNumberOrThrow(User user, Integer number) {
+        var list = problemRepo.findAllByNumberAndUser(number, user);
         if (list.isEmpty()) throw new NoSuchElementException("문제 미존재(번호)");
         if (list.size() > 1) throw new IllegalStateException("해당 번호가 여러 개입니다. 이름으로 지정해 주세요.");
         return list.get(0);
@@ -61,11 +62,11 @@ public class ReviewService {
 
     }
 
-    public List<Problem> listAllActiveOrderByDate() {
-        return problemRepo.findByStatusOrderByNextReviewDateAsc(ProblemStatus.ACTIVE);
+    public List<Problem> listAllActiveOrderByDate(User user) {
+        return problemRepo.findByUserAndStatusOrderByNextReviewDateAsc(user, ProblemStatus.ACTIVE);
     }
-    public Problem solve(String name) {
-        Problem p = getByNameOrThrow(name);
+    public Problem solve(User user, String name) {
+        Problem p = getByNameOrThrow(user, name);
         // 하루 1회 중복 처리 방지 (Solve)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.SOLVE)) {
             throw new IllegalStateException("오늘은 이미 SOLVE 처리되었습니다.");
@@ -85,8 +86,8 @@ public class ReviewService {
         return p;
     }
 
-    public Problem fail(String name) { // 파라미터를 int number -> String name 으로 변경
-        Problem p = getByNameOrThrow(name); // 문제 검색 로직을 getByNameOrThrow로 변경
+    public Problem fail(User user, String name) {
+        Problem p = getByNameOrThrow(user, name);
         // 하루 1회 중복 처리 방지 (Fail)
         if (logRepo.existsByProblemAndActionDateAndAction(p, today(), ReviewAction.FAIL)) {
             throw new IllegalStateException("오늘은 이미 FAIL 처리되었습니다.");
@@ -101,8 +102,8 @@ public class ReviewService {
         writeLog(p, ReviewAction.FAIL, beforeStep, beforeCount);
         return p;
     }
-    private Problem findByNumberOrThrow(int number) {
-        return problemRepo.findByNumber(number)
+    private Problem findByNumberOrThrow(User user, int number) {
+        return problemRepo.findByNumberAndUser(number, user)
                 .orElseThrow(() -> new NoSuchElementException("해당 번호의 문제가 없습니다."));
     }
 
@@ -117,17 +118,15 @@ public class ReviewService {
                 .afterReviewCount(p.getReviewCount())
                 .build());
     }
-    public Optional<Problem> findOptionalByNumber(int number) {
-        return problemRepo.findByNumber(number);
+    public Optional<Problem> findOptionalByNumber(User user, int number) {
+        return problemRepo.findByNumberAndUser(number, user);
     }
     @Transactional
-    public void deleteByName(String Name) {
-        Problem problem = problemRepo.findByName(Name)
+    public void deleteByName(User user, String name) {
+        Problem problem = problemRepo.findByNameAndUser(name, user)
                 .orElseThrow(() -> new NoSuchElementException("해당 이름의 문제가 없습니다."));
-        // 문제 삭제
         problemRepo.delete(problem);
     }
-
 
     private void scheduleNextReview(Problem p, LocalDate base) {
 
@@ -169,8 +168,8 @@ public class ReviewService {
     }
 
     @Transactional
-    public Problem graduate(String name) {
-        Problem p = getByNameOrThrow(name);
+    public Problem graduate(User user, String name) {
+        Problem p = getByNameOrThrow(user, name);
 
         // 이미 졸업한 경우, 아무 작업도 하지 않고 반환 (선택적 방어 코드)
         if (p.getStatus() == ProblemStatus.GRADUATED) {

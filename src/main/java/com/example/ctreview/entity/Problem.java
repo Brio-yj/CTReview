@@ -6,8 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Table(name = "problems", indexes = {
-        @Index(name = "ix_next_review_status", columnList = "next_review_date,status"),
-        @Index(name = "ux_problem_number", columnList = "number", unique = true)
+        @Index(name = "ix_next_review_status", columnList = "next_review_date,status")
 })
 @Getter @Entity
 @Setter
@@ -21,7 +20,7 @@ public class Problem {
     @Column(nullable = true)                 // 번호는 있을 수도/없을 수도
     private Integer number;
 
-    @Column(nullable = false, unique = true, length = 200)  // 이름 전역 유니크
+    @Column(nullable = false, length = 200)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -38,6 +37,9 @@ public class Problem {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) private ProblemStatus status = ProblemStatus.ACTIVE;
+
+    @ManyToOne
+    private User user;
 
     @Version private Long version;
 

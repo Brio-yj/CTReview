@@ -4,7 +4,9 @@ import com.example.ctreview.dto.ProblemDto;
 import com.example.ctreview.dto.ProblemSearchRequest;
 import com.example.ctreview.entity.Problem;
 import com.example.ctreview.entity.ProblemStatus;
+
 import com.example.ctreview.repository.ProblemRepository;
+import com.example.ctreview.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +23,7 @@ import java.util.stream.Stream;
 public class ProblemQueryController {
 
     private final ProblemRepository problemRepo;
+    private final AuthService authService;
 
     @GetMapping
     public List<ProblemDto> search(ProblemSearchRequest req) {

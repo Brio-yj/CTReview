@@ -7,7 +7,13 @@ const API = {
     graduateAny:(params) => `/api/problems/graduate?${params.toString()}`,
     deleteAny:(params) => `/api/problems?${params.toString()}`,
     search:   (params) => `/api/problems?${params.toString()}`,
-    dashboard:() => `/api/dashboard/summary`
+    dashboard:() => `/api/dashboard/summary`,
+    auth: {
+        me: () => `/api/auth/me`,
+        login: () => `/api/auth/login`,
+        register: () => `/api/auth/register`,
+        logout: () => `/api/auth/logout`
+    }
 };
 
 async function http(method, url, body) {
@@ -23,7 +29,6 @@ async function http(method, url, body) {
     return res.json();
 }
 const el = (id) => document.getElementById(id);
-
 function fmtDate(d){ return d ? d.replace(/-/g,'.') : '-'; }
 
 const diffMap = {HIGH:'상', MEDIUM:'중', LOW:'하'};
@@ -315,6 +320,9 @@ function init() {
     el('quick-solve')?.addEventListener('click', () => quickAction('solve'));
     el('quick-fail')?.addEventListener('click', () => quickAction('fail'));
     el('btn-refresh-dashboard')?.addEventListener('click', loadDashboard);
+    el('btn-login')?.addEventListener('click', doLogin);
+    el('btn-register')?.addEventListener('click', doRegister);
+    el('btn-logout')?.addEventListener('click', doLogout);
 
     el('p-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') addProblem(); });
     el('s-q').addEventListener('keydown', (e) => { if (e.key === 'Enter') performSearch(); });
@@ -334,6 +342,7 @@ function init() {
         input.addEventListener('click',open); input.addEventListener('focus',open);
     });
 
+    checkAuth();
     Promise.all([loadToday(), performSearch()]).then(loadDashboard);
 }
 

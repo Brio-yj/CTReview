@@ -44,7 +44,7 @@ public class ReviewService {
         p.setCategory(category);
         p.setDifficulty(difficulty);
         p.setReviewStep(1);
-        p.setReviewCount(0);
+        p.setReviewCount(0); // 현재 간격 인덱스
         p.setStatus(ProblemStatus.ACTIVE);
         scheduleNextReview(p, now());
         return problemRepo.save(p);
@@ -80,13 +80,9 @@ public class ReviewService {
         var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        if (p.getReviewStep() >= 3) {
-            p.graduate();
-        } else {
-            p.setReviewStep(p.getReviewStep() + 1);
-            p.setReviewCount(0);
-            scheduleNextReview(p, now());
-        }
+        // 다음 간격으로 이동
+        p.setReviewCount(p.getReviewCount() + 1);
+        scheduleNextReview(p, now());
 
         writeLog(p, ReviewAction.SOLVE, beforeStep, beforeCount);
         return p;
@@ -102,8 +98,7 @@ public class ReviewService {
         var beforeStep = p.getReviewStep();
         var beforeCount = p.getReviewCount();
 
-        // 실패는 졸업하지 않음: 같은 레벨 유지
-        p.setReviewCount(p.getReviewCount() + 1);
+        // 실패는 현재 간격을 한 번 더 유지
         scheduleNextReviewOnFail(p, now());
 
         writeLog(p, ReviewAction.FAIL, beforeStep, beforeCount);
@@ -134,32 +129,29 @@ public class ReviewService {
     }
 
     private void scheduleNextReview(Problem p, LocalDateTime base) {
-        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        if (intervals.length == 0) {
+        int[] intervals = reviewPolicy.intervals(p.getDifficulty());
+        int index = p.getReviewCount();
+        if (index >= intervals.length) {
             p.graduate();
             return;
         }
-        var unit = reviewPolicy.unit();
-        int index = Math.min(p.getReviewCount(), intervals.length - 1);
+        p.setReviewStep(reviewPolicy.step(p.getDifficulty(), index));
         int amt = intervals[index];
+        var unit = reviewPolicy.unit();
         activate(p, base.plus(amt, unit));
     }
 
     private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
-        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        var unit = reviewPolicy.unit();
+        int[] intervals = reviewPolicy.intervals(p.getDifficulty());
+        int index = p.getReviewCount();
         if (intervals.length == 0) {
-            activate(p, base.plus(1, unit));
             return;
         }
-        if (p.getReviewCount() < intervals.length) {
-            int amt = intervals[p.getReviewCount()];
-            activate(p, base.plus(amt, unit));
-        } else {
-            int last = intervals[intervals.length - 1];
-            activate(p, base.plus(last * 2L, unit));
-            p.setReviewCount(intervals.length);
-        }
+        if (index >= intervals.length) index = intervals.length - 1;
+        p.setReviewStep(reviewPolicy.step(p.getDifficulty(), index));
+        int amt = intervals[index];
+        var unit = reviewPolicy.unit();
+        activate(p, base.plus(amt, unit));
     }
 
     private void activate(Problem p, LocalDateTime next) {

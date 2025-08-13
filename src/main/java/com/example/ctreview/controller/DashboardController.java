@@ -7,6 +7,7 @@ import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.repository.ReviewLogRepository;
 import com.example.ctreview.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
+@Slf4j
 public class DashboardController {
 
     private final ReviewLogRepository logRepo;
@@ -30,6 +32,7 @@ public class DashboardController {
     @GetMapping("/summary")
     public DashboardSummaryDto summary(HttpSession session) {
         User user = authService.getCurrentUser(session);
+        log.debug("Dashboard summary for user id={}", user != null ? user.getId() : null);
         LocalDate today = LocalDate.now(clock);
         LocalDate from = today.minusDays(29);
 

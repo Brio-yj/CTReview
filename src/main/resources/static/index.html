@@ -107,10 +107,12 @@
 
     <section class="card card--clip q2-quick">
         <h2>예습</h2>
-        <div class="body row" style="gap:12px; flex-wrap:wrap;">
-            <input id="quick-name" type="text" placeholder="문제 이름으로 Solve/Fail" style="max-width:260px;">
-            <button class="btn btn-ok" id="quick-solve">Solve</button>
-            <button class="btn btn-bad" id="quick-fail">Fail</button>
+        <div class="body stack">
+            <input id="quick-name" type="text" placeholder="문제 이름으로 Solve/Fail" />
+            <div class="row quick-actions">
+                <button class="btn btn-ok" id="quick-solve">Solve</button>
+                <button class="btn btn-bad" id="quick-fail">Fail</button>
+            </div>
         </div>
     </section>
 
@@ -163,7 +165,7 @@
         <h2>오늘 복습</h2>
         <div class="body">
             <div class="table-wrap" id="wrap-today">
-                <table>
+                <table class="table">
                     <thead>
                     <tr>
                         <th>카테고리</th>
@@ -184,7 +186,7 @@
         <h2>검색 결과</h2>
         <div class="body">
             <div class="table-wrap" id="wrap-search">
-                <table>
+                <table class="table">
                     <thead>
                     <tr>
                         <th>카테고리</th>

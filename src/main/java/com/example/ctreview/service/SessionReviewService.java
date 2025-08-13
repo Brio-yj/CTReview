@@ -43,7 +43,7 @@ public class SessionReviewService {
         p.setCategory(category);
         p.setDifficulty(difficulty);
         p.setReviewStep(1);
-        p.setReviewCount(0);
+        p.setReviewCount(0); // 현재 간격 인덱스
         scheduleNextReview(p, now());
         list.add(p);
         return p;
@@ -65,20 +65,14 @@ public class SessionReviewService {
     public Problem solve(HttpSession session, String name) {
         Problem p = getByName(session, name);
         log.debug("[session] solve name={}", name);
-        if (p.getReviewStep() >= 3) {
-            p.graduate();
-        } else {
-            p.setReviewStep(p.getReviewStep() + 1);
-            p.setReviewCount(0);
-            scheduleNextReview(p, now());
-        }
+        p.setReviewCount(p.getReviewCount() + 1);
+        scheduleNextReview(p, now());
         return p;
     }
 
     public Problem fail(HttpSession session, String name) {
         Problem p = getByName(session, name);
         log.debug("[session] fail name={}", name);
-        p.setReviewCount(p.getReviewCount() + 1);
         scheduleNextReviewOnFail(p, now());
         return p;
     }
@@ -104,32 +98,29 @@ public class SessionReviewService {
     }
 
     private void scheduleNextReview(Problem p, LocalDateTime base) {
-        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        if (intervals.length == 0) {
+        int[] intervals = reviewPolicy.intervals(p.getDifficulty());
+        int index = p.getReviewCount();
+        if (index >= intervals.length) {
             p.graduate();
             return;
         }
-        var unit = reviewPolicy.unit();
-        int index = Math.min(p.getReviewCount(), intervals.length - 1);
+        p.setReviewStep(reviewPolicy.step(p.getDifficulty(), index));
         int amt = intervals[index];
+        var unit = reviewPolicy.unit();
         activate(p, base.plus(amt, unit));
     }
 
     private void scheduleNextReviewOnFail(Problem p, LocalDateTime base) {
-        int[] intervals = reviewPolicy.intervals(p.getReviewStep());
-        var unit = reviewPolicy.unit();
+        int[] intervals = reviewPolicy.intervals(p.getDifficulty());
+        int index = p.getReviewCount();
         if (intervals.length == 0) {
-            activate(p, base.plus(1, unit));
             return;
         }
-        if (p.getReviewCount() < intervals.length) {
-            int amt = intervals[p.getReviewCount()];
-            activate(p, base.plus(amt, unit));
-        } else {
-            int last = intervals[intervals.length - 1];
-            activate(p, base.plus(last * 2L, unit));
-            p.setReviewCount(intervals.length);
-        }
+        if (index >= intervals.length) index = intervals.length - 1;
+        p.setReviewStep(reviewPolicy.step(p.getDifficulty(), index));
+        int amt = intervals[index];
+        var unit = reviewPolicy.unit();
+        activate(p, base.plus(amt, unit));
     }
 
     private void activate(Problem p, LocalDateTime next) {

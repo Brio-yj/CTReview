@@ -23,8 +23,10 @@ body {
 /* --- 2. Header (레이아웃 수정) --- */
 header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 .header-row{ display:flex; align-items:stretch; gap:16px; }
-.header-left{ flex: 1 1 auto; } /* 왼쪽이 남은 공간 모두 차지 */
-.header-right{ flex: 0 0 auto; } /* 오른쪽은 내용만큼만 너비 차지 */
+.header-left{ flex: 1 1 0; }
+.header-center{ flex: 1 1 0; }
+.header-right{ flex: 0 0 auto; }
+.header-center .card-body{ display:flex; justify-content:center; align-items:center; }
 
 .header-left .card-body { display: flex; flex-direction: column; height: 100%; }
 .header-left .sub { margin-top: 4px; }

@@ -3,17 +3,19 @@ package com.example.ctreview.dto;
 import com.example.ctreview.entity.Problem;
 import lombok.Builder;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 @Builder
 public record ProblemDto(
         Integer number, String name, String category,
-        int currentLevel, int reviewCount, LocalDate nextReviewDate, String status
+        String difficulty,
+        int reviewStep, int reviewCount, LocalDateTime nextReviewDate, String status
 ) {
     public static ProblemDto from(Problem p) {
         return ProblemDto.builder()
                 .number(p.getNumber()).name(p.getName())
                 .category(p.getCategory()==null?null:p.getCategory().name())
-                .currentLevel(p.getCurrentLevel())
+                .difficulty(p.getDifficulty().name())
+                .reviewStep(p.getReviewStep())
                 .reviewCount(p.getReviewCount())
                 .nextReviewDate(p.getNextReviewDate())
                 .status(p.getStatus().name())

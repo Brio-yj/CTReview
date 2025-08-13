@@ -1,5 +1,8 @@
 package com.example.ctreview.entity;
 
+import java.time.temporal.ChronoUnit;
+
 public interface ReviewPolicy {
-    int [] intervals(int level);
+    int [] intervals(int step);
+    ChronoUnit unit();
 }

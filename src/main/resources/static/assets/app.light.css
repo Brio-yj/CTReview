@@ -1,33 +1,33 @@
-/* Light Theme Override */
+/* Light Theme Override - Neon-inspired with vibrant gradients */
 body.light {
-    --bg: linear-gradient(135deg, #f6f7fb 0%, #e2e6f4 100%);
-    --card: #ffffff;
-    --card-2: #f1f5ff;
-    --text: #101428;
-    --muted: #6b7690;
-    --border: #e6e9f2;
-    --card-shadow: 0 6px 18px rgba(16,20,40,0.06);
-    --btn-top: #ffffff;
-    --btn-bottom: #f1f5ff;
-    --btn-text: #49516d;
-    --btn-border: #d9deea;
-
-    /* 토스트 색상 변수 */
-    --toast-ok-bg: #f0fdf4;
-    --toast-bad-bg: #fef2f2;
-    --toast-info-bg: #f8f9fe;
-
-    /* 차트 색상 변수 */
-    --chart-grid: #e5e7eb;
-    --chart-label: #6b7280;
-    --chart-bar: #60a5fa;
-
-    /* 라이트모드 히트맵 색상 (Github 스타일 유지) */
-    --heat-0: #ebedf0;
-    --heat-1: #9be9a8;
-    --heat-2: #40c463;
-    --heat-3: #30a14e;
-    --heat-4: #216e39;
+    --bg: linear-gradient(135deg, #f0f0ff 0%, #d9d9ff 100%); /* Light pastel gradient */
+    --card: rgba(255, 255, 255, 0.9);
+    --card-2: rgba(245, 245, 255, 0.9);
+    --text: #1a1a40; /* Darker for contrast */
+    --muted: #6666cc; /* Pastel purple */
+    --border: rgba(102, 102, 255, 0.5); /* Neon-inspired border */
+    --card-shadow: 0 0 15px rgba(102, 102, 255, 0.4), 0 0 30px rgba(102, 102, 255, 0.2);
+    --btn-top: linear-gradient(45deg, #ff66cc, #66ccff); /* Neon pink to cyan */
+    --btn-bottom: linear-gradient(45deg, #cc3399, #3399ff);
+    --btn-text: #ffffff;
+    --btn-border: rgba(255, 255, 255, 0.3);
+    --toast-ok-bg: rgba(102, 255, 102, 0.8); /* Neon green */
+    --toast-bad-bg: rgba(255, 102, 102, 0.8); /* Neon red */
+    --toast-info-bg: rgba(102, 204, 255, 0.8); /* Neon cyan */
+    --chart-grid: rgba(102, 102, 255, 0.3);
+    --chart-label: #6666cc;
+    --chart-bar: #ff66cc; /* Neon pink for bars */
+    --heat-0: #e6e6ff;
+    --heat-1: #99ccff; /* Light neon blue */
+    --heat-2: #66b3ff;
+    --heat-3: #3399ff;
+    --heat-4: #0566ca; /* Bright white glow */
+    --dropdown-bg: rgba(245, 245, 255, 0.9); /* Light dropdown background */
+    --dropdown-text: #1a1a40; /* Dark text for readability */
+    --grad-high: linear-gradient(45deg, #ff6666, #cc3333); /* Neon red for HIGH */
+    --grad-medium: linear-gradient(45deg, #ffcc00, #cc9900); /* Neon yellow for MEDIUM */
+    --grad-low: linear-gradient(45deg, #66ff66, #33cc33); /* Neon green for LOW */
+    --grad-bg: rgba(245, 245, 255, 0.9); /* Match canvas background */
 }
 
 body.light {
@@ -35,35 +35,130 @@ body.light {
     color: var(--text);
 }
 body.light input[type="date"] { color-scheme: light; }
-body.light .btn-ok { border-color: #a7f3d0; background: #f0fdf4; color: #15803d; }
-body.light .btn-bad { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
-body.light table th { color: #49516d; }
-body.light tbody tr:hover td { background: rgba(0,0,0,0.02); }
-body.light .sub { color: #6b7690; }
+body.light .btn-ok {
+    background: linear-gradient(45deg, #66ff66, #33cc33);
+    color: #ffffff;
+}
+body.light .btn-bad {
+    background: linear-gradient(45deg, #ff6666, #cc3333);
+    color: #ffffff;
+}
+body.light table th { color: #6666cc; text-shadow: 0 0 3px rgba(102, 102, 255, 0.3); }
+body.light tbody tr:hover td { background: rgba(102, 102, 255, 0.05); }
+body.light .sub { color: #6666cc; }
 body.light .pill { border-color: var(--border); }
-body.light .pill.ok { color:#166534; border-color:#4ade80; background:#dcfce7; }
-body.light .pill.warn { color:#854d0e; border-color:#fcd34d; background:#fefce8; }
-body.light .table tbody tr{ background: #fff; border-color: var(--border); }
-body.light .table td{ border-bottom-color: var(--border); }
-body.light .table-wrap tbody tr:first-child td{ border-top:1px solid var(--border); }
+body.light .pill.ok { color: #33cc33; border-color: #66ff66; background: rgba(102, 255, 102, 0.2); }
+body.light .pill.warn { color: #cc9900; border-color: #ffcc00; background: rgba(255, 204, 0, 0.2); }
+body.light .table tbody tr { background: #fff; border-color: var(--border); }
+body.light .table td { border-bottom-color: var(--border); }
+body.light .table-wrap tbody tr:first-child td { border-top: 1px solid var(--border); }
 body.light code.badge {
     background: transparent !important;
-    border: 1px solid #d9deea;
-    color: #101428;
+    border: 1px solid var(--border);
+    color: #1a1a40;
+    text-shadow: 0 0 3px rgba(102, 102, 255, 0.2);
 }
-body.light canvas { background: #fafbff; border-color: #e5e7eb; }
-/* 라이트모드 토스트는 테두리 색상을 더 진하게 */
-body.light .toast { border-color: #d1d5db; }
-
-/*BADGES*/
-body.light code.badge {
-    border: none;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+body.light canvas {
+    background: var(--grad-bg); /* Canvas background for daily processing graph */
+    border-color: var(--border);
+    box-shadow: 0 0 10px rgba(102, 102, 255, 0.3);
+}
+body.light .toast {
+    border-color: var(--border);
+    box-shadow: 0 0 15px rgba(102, 102, 255, 0.4);
+    backdrop-filter: blur(5px);
 }
 
-body.light .pill-grad.HIGH { background-color: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-body.light .pill-grad.MEDIUM { background-color: #fefce8; border-color: #fcd34d; color: #854d0e; }
-body.light .pill-grad.LOW { background-color: #dcfce7; border-color: #4ade80; color: #166534; }
+/* Dashboard Streak Styling */
+body.light #streak {
+    background: var(--btn-top); /* Apply neon gradient */
+    color: var(--btn-text);
+    padding: 10px 16px;
+    border-radius: 14px;
+    border: none; /* Match button style */
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+body.light #streak::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(10px);
+    opacity: 0.3;
+    z-index: -1; /* Subtle blur for natural gradient edge */
+}
+body.light #streak:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(102, 102, 255, 0.6), 0 0 30px rgba(102, 102, 255, 0.3); /* Match button hover */
+}
+
+/* Dropdown Styling for Light Mode */
+body.light select {
+    background: var(--dropdown-bg);
+    color: var(--dropdown-text);
+}
+body.light select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 102, 255, 0.4);
+    border-color: #66ccff;
+}
 
 /* light mode scrollbar */
-body.light ::-webkit-scrollbar-thumb { background: #c3c7d4; }
+body.light ::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #66ccff, #ff66cc); /* Neon scrollbar */
+}
+
+/* Additional light mode tweaks for neon trends */
+body.light .card {
+    backdrop-filter: blur(12px);
+}
+body.light input:focus, body.light select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 102, 255, 0.4);
+    border-color: #66ccff;
+}
+body.light .heatmap-cell {
+    border-radius: 6px;
+}
+body.light .heatmap-cell:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 10px var(--heat-4);
+}
+body.light tbody tr:hover td {
+    background: rgba(102, 102, 255, 0.05);
+    transition: background 0.2s;
+}
+body.light .pill:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(102, 102, 255, 0.5);
+}
+body.light .card h2 {
+    text-shadow: 0 0 5px rgba(102, 102, 255, 0.3);
+}
+
+/* 난이도별 태그 스타일 (Light Mode) */
+body.light .pill-grad {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+body.light .pill-grad.HIGH {
+    background: var(--grad-high);
+    border: 1px solid rgba(255, 153, 153, 0.5);
+    color: #ffffff;
+}
+body.light .pill-grad.MEDIUM {
+    background: var(--grad-medium);
+    border: 1px solid rgba(255, 204, 77, 0.5);
+    color: #ffffff;
+}
+body.light .pill-grad.LOW {
+    background: var(--grad-low);
+    border: 1px solid rgba(153, 255, 153, 0.5);
+    color: #ffffff;
+}
+
+body.light #grad-list{background-color: #F5F5FF;}

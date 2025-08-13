@@ -7,6 +7,7 @@ import com.example.ctreview.entity.ProblemStatus;
 import com.example.ctreview.entity.User;
 import com.example.ctreview.repository.ProblemRepository;
 import com.example.ctreview.service.AuthService;
+import com.example.ctreview.service.SessionReviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,12 +29,15 @@ public class ProblemQueryController {
 
     private final ProblemRepository problemRepo;
     private final AuthService authService;
+    private final SessionReviewService sessionReviewService;
 
     @GetMapping
     public List<ProblemDto> search(ProblemSearchRequest req, HttpSession session) {
         User user = authService.getCurrentUser(session);
         log.debug("Search problems userId={} params={}", user != null ? user.getId() : null, req);
+
         Stream<Problem> stream = problemRepo.findByUser(user).stream();
+
         if (req.status() == null) {
             stream = stream.filter(p -> p.getStatus() == ProblemStatus.ACTIVE);
         }

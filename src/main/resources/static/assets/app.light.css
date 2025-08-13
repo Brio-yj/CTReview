@@ -1,11 +1,16 @@
 /* Light Theme Override */
 body.light {
-    --bg: #f6f7fb;
+    --bg: linear-gradient(135deg, #f6f7fb 0%, #e2e6f4 100%);
     --card: #ffffff;
-    --card-2: #ffffff;
+    --card-2: #f1f5ff;
     --text: #101428;
     --muted: #6b7690;
     --border: #e6e9f2;
+    --card-shadow: 0 6px 18px rgba(16,20,40,0.06);
+    --btn-top: #ffffff;
+    --btn-bottom: #f1f5ff;
+    --btn-text: #49516d;
+    --btn-border: #d9deea;
 
     /* 토스트 색상 변수 */
     --toast-ok-bg: #f0fdf4;
@@ -16,7 +21,6 @@ body.light {
     --chart-grid: #e5e7eb;
     --chart-label: #6b7280;
     --chart-bar: #60a5fa;
-
 
     /* 라이트모드 히트맵 색상 (Github 스타일 유지) */
     --heat-0: #ebedf0;
@@ -30,25 +34,7 @@ body.light {
     background: var(--bg);
     color: var(--text);
 }
-body.light .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: 0 6px 18px rgba(16,20,40,0.06);
-}
-body.light input,
-body.light select {
-    background: #ffffff;
-    border: 1px solid #d9deea;
-    color: #101428;
-}
-body.light input::placeholder { color: #b0b9d1; }
-body.light input[type="date"] { color-scheme: light; background:#ffffff; border:1px solid #d9deea; }
-body.light .btn {
-    border-color: #d9deea;
-    background: #fdfdff;
-    color: #49516d;
-}
-body.light .btn:hover { background: #f8f9fe; }
+body.light input[type="date"] { color-scheme: light; }
 body.light .btn-ok { border-color: #a7f3d0; background: #f0fdf4; color: #15803d; }
 body.light .btn-bad { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
 body.light table th { color: #49516d; }
@@ -75,11 +61,9 @@ body.light code.badge {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-body.light .grad-list-container {
-    background: #fafbff;
-    border-color: #e5e7eb;
-}
-
 body.light .pill-grad.HIGH { background-color: #fef2f2; border-color: #fecaca; color: #b91c1c; }
 body.light .pill-grad.MEDIUM { background-color: #fefce8; border-color: #fcd34d; color: #854d0e; }
 body.light .pill-grad.LOW { background-color: #dcfce7; border-color: #4ade80; color: #166534; }
+
+/* light mode scrollbar */
+body.light ::-webkit-scrollbar-thumb { background: #c3c7d4; }

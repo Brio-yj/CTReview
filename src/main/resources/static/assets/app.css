@@ -1,9 +1,22 @@
 :root {
-    /* ... 색상 변수는 이전과 동일 ... */
-    --bg: #0b1020;
+    /* Dark theme colors */
+    --bg: linear-gradient(135deg, #0b1020 0%, #151b35 100%);
     --card: #12182b;
+    --card-2: #1b223b;
     --text: #e8eefc;
+    --muted: #8c99b7;
     --border: #1f2742;
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    --btn-top: #1d2d5c;
+    --btn-bottom: #15214b;
+    --btn-text: var(--text);
+    --btn-border: var(--border);
+    --toast-ok-bg: #1a3f2a;
+    --toast-bad-bg: #3b1a1a;
+    --toast-info-bg: #1a2a4f;
+    --chart-grid: #1f2742;
+    --chart-label: #8c99b7;
+    --chart-bar: #4f6bed;
     --bad: #ef4444;
     --heat-0: #2d333b;
     --heat-1: #465775;
@@ -17,7 +30,7 @@ body {
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     background: var(--bg);
     color: var(--text);
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.3s, color 0.3s;
 }
 
 /* --- 2. Header (레이아웃 수정) --- */
@@ -89,7 +102,8 @@ header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
     background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
     border: 1px solid var(--border);
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    box-shadow: var(--card-shadow);
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .card h2 { font-size: 16px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .card .body { padding: 14px 16px; }
@@ -101,18 +115,18 @@ header{ padding:16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
 input, select {
     width: 100%; padding: 10px 12px; border-radius: 10px;
-    background: #0b132a; border: 1px solid #1b2445;
-    color: var(--text); outline: none; transition: background 0.2s, border-color 0.2s, color 0.2s;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); outline: none; transition: background 0.3s, border-color 0.3s, color 0.3s;
 }
-input::placeholder { color: #6f7fad; }
-input[type="date"]{ position:relative; cursor:pointer; color-scheme:dark; background:#0b132a; border:1px solid #2a3a6b; -moz-appearance:textfield; }
+input::placeholder { color: var(--muted); }
+input[type="date"]{ position:relative; cursor:pointer; color-scheme:dark; background:var(--card); border:1px solid var(--border); -moz-appearance:textfield; }
 input[type="date"]::-webkit-calendar-picker-indicator{ opacity:0; display:none; }
 
 .btn{
-    appearance: none; border: 1px solid var(--border);
-    background: linear-gradient(180deg,#1a2550,#15214b);
-    color: var(--text); padding: 10px 14px; border-radius: 10px;
-    cursor: pointer; font-weight: 600; transition: filter 0.2s, background 0.2s, border-color 0.2s;
+    appearance: none; border: 1px solid var(--btn-border);
+    background: linear-gradient(180deg,var(--btn-top),var(--btn-bottom));
+    color: var(--btn-text); padding: 10px 14px; border-radius: 10px;
+    cursor: pointer; font-weight: 600; transition: filter 0.2s, background 0.3s, border-color 0.3s, color 0.3s;
 }
 .btn:hover { filter: brightness(1.08); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -166,8 +180,8 @@ code.badge {
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px;
-    background: #0b132a;
-    border:1px solid #1b2445;
+    background: var(--card);
+    border:1px solid var(--border);
     border-radius: 10px;
     width: 100%;
     overflow-y: auto;
@@ -188,12 +202,13 @@ code.badge {
 .pill-grad.MEDIUM { background-color: #3b2505; border: 1px solid #7c4a0b; color: #fde68a; }
 .pill-grad.LOW { background-color: #052e16; border: 1px solid #14532d; color: #86efac; }
 
-/* 라이트 모드 대응 */
-body.light .grad-list-container {
-    background: #fafbff;
-    border-color: #e5e7eb;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
-
-body.light .pill-grad.HIGH { background-color: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-body.light .pill-grad.MEDIUM { background-color: #fefce8; border-color: #fcd34d; color: #854d0e; }
-body.light .pill-grad.LOW { background-color: #dcfce7; border-color: #4ade80; color: #166534; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}

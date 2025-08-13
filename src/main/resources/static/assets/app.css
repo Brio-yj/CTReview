@@ -44,7 +44,7 @@ body {
 header { padding: 16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 .header-row { display: flex; align-items: stretch; gap: 16px; }
 
-.header-left { flex: 1 1 auto; }
+.header-left { flex: 1 1 auto; min-width: 0; }
 .header-right { flex: 0 0 auto; }
 
 .header-left .card-body { display: flex; flex-direction: column; height: 100%; }
@@ -117,7 +117,7 @@ header { padding: 16px 20px 8px 20px; max-width: 1280px; margin: 0 auto; }
 }
 .card .body { padding: 14px 16px; }
 .card--fixed .body { display: flex; flex-direction: column; }
-.table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; border-radius: 10px; }
+.table-wrap { flex: 1 1 auto; min-height: 0; overflow-x: auto; overflow-y: auto; border-radius: 10px; }
 
 /* --- Forms & Buttons --- */
 .stack { display: grid; gap: 12px; }
@@ -176,8 +176,8 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; display: non
 }
 
 /* --- Table --- */
-.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.table { min-width: 100%; width: max-content; border-collapse: collapse; }
+th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; white-space: nowrap; }
 th { color: var(--muted); text-align: left; font-weight: 600; text-shadow: 0 0 3px rgba(80, 80, 255, 0.3); }
 tbody tr:hover td { background: rgba(80, 80, 255, 0.1); transition: background 0.2s; }
 .table-wrap tbody tr:first-child td { border-top: 1px solid var(--border); }
@@ -213,6 +213,9 @@ tbody tr:hover td { background: rgba(80, 80, 255, 0.1); transition: background 0
 .pill.ok { color: #00ff80; border-color: #00cc66; background: rgba(0, 255, 128, 0.2); }
 .pill.warn { color: #ffcc00; border-color: #cc9900; background: rgba(255, 204, 0, 0.2); }
 .row { display: flex; align-items: center; gap: 8px; }
+.quick-body { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.quick-body > * { flex: 1 1 120px; }
+.quick-body input { flex: 2 1 240px; min-width: 0; }
 canvas {
     width: 100%;
     height: auto;
